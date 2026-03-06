@@ -897,6 +897,8 @@ function launchBooking(){
         target: 'CF_WIDGET_TARGET',
         item_id: String(firstItem.itemId),
         slip: firstItem.slip,
+        date: fmtApi(document.getElementById('startDate').value),
+        end_date: fmtApi(document.getElementById('endDate').value),
         provider: 'droplet',
         options: 'hidesearch,hidedates'
       }).render();
