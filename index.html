@@ -189,6 +189,20 @@ body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--tx); 
   .hub-grid { grid-template-columns:1fr; }
 }
 .err { padding:12px 16px; background:#2a1010; border:1px solid var(--red); border-radius:var(--radius); color:#c06060; font-size:12px; margin:16px 0; }
+
+/* ── Layout toggle (feature flag: SHOW_LAYOUT_TOGGLE) ────── */
+.layout-toggle-btn { display:inline-flex; align-items:center; gap:6px; padding:7px 14px; margin-bottom:14px; background:var(--sf3); border:1px solid var(--bd); border-radius:var(--radius); color:var(--txd); font-size:11px; font-family:'JetBrains Mono',monospace; cursor:pointer; transition:border-color 0.15s, color 0.15s, background 0.15s; }
+.layout-toggle-btn:hover { border-color:var(--gld); color:var(--gldl); }
+.layout-toggle-btn.active { border-color:var(--gld); color:var(--gldl); background:var(--chk); }
+.layout-toggle-btn .toggle-arrow { transition:transform 0.2s; font-size:9px; }
+.layout-toggle-btn.active .toggle-arrow { transform:rotate(90deg); }
+.layout-image-wrap { display:none; margin-bottom:18px; border:1px solid var(--bd); border-radius:var(--radius); overflow:hidden; background:var(--sf); }
+.layout-image-wrap.vis { display:block; }
+.layout-image-wrap img { width:100%; height:auto; display:block; }
+@media(max-width:900px){
+  .layout-image-wrap { overflow-x:auto; -webkit-overflow-scrolling:touch; }
+  .layout-image-wrap img { width:auto; min-width:700px; max-width:none; }
+}
 </style>
 </head>
 <body>
@@ -238,6 +252,11 @@ body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--tx); 
     <div class="map-panel" role="region" aria-label="Stall map">
       <div class="map-title" id="mapTitle">—</div>
       <div class="map-subtitle" id="mapSubtitle">—</div>
+      <!-- Layout toggle (feature flag: SHOW_LAYOUT_TOGGLE) -->
+      <div id="layoutToggleWrap" style="display:none;">
+        <button class="layout-toggle-btn" id="layoutToggleBtn" onclick="toggleLayout()"><span class="toggle-arrow">&#9654;</span> View Barn Layout</button>
+        <div class="layout-image-wrap" id="layoutImageWrap"><img id="layoutImage" src="" alt="Barn layout map"></div>
+      </div>
       <div id="mapLoading" class="map-loading" style="display:none"><div class="spin" role="status" aria-label="Loading"></div><p>Loading stall map...</p></div>
       <div id="mapContent"></div>
     </div>
@@ -299,6 +318,15 @@ body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--tx); 
 
 <script>
 var FALLBACK_URL='https://circle-t-arena.manage.na1.bookingplatform.app/reserve';
+
+// ── Feature flag: set to false to hide layout toggles ───────
+var SHOW_LAYOUT_TOGGLE=true;
+var LAYOUT_IMAGES={
+  'barn-b':'/barn-b-layout.png'
+  // Add more as layouts become available:
+  // 'barn-a':'/barn-a-layout.png',
+  // 'barn-c':'/barn-c-layout.png',
+};
 
 var AREAS=[
   {id:'barn-a',name:'Barn A',desc:'70 regular stalls and 7 turn-out stalls. Upper and lower sections.',categories:'3740,3756',subtitle:'Stalls 1\u201370 (incl. Turn Out 1\u20137)'},
@@ -397,10 +425,24 @@ async function fetchHubAvailability(start,end){
 }
 
 // ── AREA MAP ────────────────────────────────────────────────
+function toggleLayout(){
+  var btn=document.getElementById('layoutToggleBtn'),wrap=document.getElementById('layoutImageWrap');
+  var open=wrap.classList.toggle('vis');
+  btn.classList.toggle('active',open);
+  btn.querySelector('.toggle-arrow').innerHTML=open?'&#9660;':'&#9654;';
+}
+function initLayoutToggle(area){
+  var wrap=document.getElementById('layoutToggleWrap'),btn=document.getElementById('layoutToggleBtn'),imgWrap=document.getElementById('layoutImageWrap'),img=document.getElementById('layoutImage');
+  if(!SHOW_LAYOUT_TOGGLE||!LAYOUT_IMAGES[area.id]){wrap.style.display='none';return;}
+  img.src=LAYOUT_IMAGES[area.id];img.alt=area.name+' layout map';
+  btn.classList.remove('active');btn.querySelector('.toggle-arrow').innerHTML='&#9654;';
+  imgWrap.classList.remove('vis');wrap.style.display='block';
+}
 function enterArea(area){
   currentArea=area;productMap={};bookedMap={};closedSet=new Set();availCache={};cart=[];mapReady=false;pendingBatch=false;selectedCell=null;selectedLabel=null;
   document.getElementById('hubView').style.display='none';document.getElementById('mapView').classList.add('vis');
   document.getElementById('mapTitle').textContent=area.name;document.getElementById('mapSubtitle').textContent=area.subtitle;
+  initLayoutToggle(area);
   document.getElementById('mapContent').innerHTML='';document.getElementById('mapLoading').style.display='flex';
   clearInfoPanel();updateCartUI();updateUrl();loadAreaProducts(area);
 }
