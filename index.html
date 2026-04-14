@@ -196,9 +196,10 @@ body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--tx); 
 .lm-frame-top span { color:var(--gld); margin:0 8px; }
 .lm-frame-left { position:absolute; left:0; top:44px; bottom:0; width:38px; display:flex; align-items:center; justify-content:center; writing-mode:vertical-rl; text-orientation:mixed; font-family:'JetBrains Mono',monospace; font-size:12px; font-weight:700; color:var(--gldl); letter-spacing:0.12em; text-transform:uppercase; border-right:1px solid var(--bd); background:var(--sf); border-radius:0 0 0 6px; }
 .lm-frame-right { position:absolute; right:0; top:44px; bottom:0; width:38px; display:flex; align-items:center; justify-content:center; writing-mode:vertical-rl; text-orientation:mixed; font-family:'JetBrains Mono',monospace; font-size:11px; font-weight:700; color:var(--gldl); letter-spacing:0.1em; text-transform:uppercase; border-left:1px solid var(--bd); background:var(--sf); border-radius:0 0 6px 0; }
-.lm-private { position:absolute; left:42px; font-family:'JetBrains Mono',monospace; font-size:12px; font-weight:500; color:var(--gldl); border:1px solid var(--bd); border-radius:3px; padding:8px 12px; line-height:1.4; background:var(--sf); z-index:5; }
-.lm-center-aisle { display:flex; flex-direction:column; justify-content:center; align-items:center; min-width:70px; padding:0 6px; gap:4px; }
-.lm-center-aisle-label { font-family:'JetBrains Mono',monospace; font-size:12px; font-weight:600; color:var(--gld); white-space:nowrap; text-align:center; padding:4px 0; }
+.lm-private { font-family:'JetBrains Mono',monospace; font-size:12px; font-weight:500; color:var(--gldl); border:1px solid var(--bd); border-radius:3px; padding:8px 12px; line-height:1.4; background:var(--sf); margin:6px 0; display:inline-block; }
+.lm-aisle-v { display:flex; flex-direction:column; align-items:center; font-family:'JetBrains Mono',monospace; font-size:12px; font-weight:600; color:var(--gld); line-height:1; padding:2px 0; margin:1px 0; }
+.lm-center-aisle { display:flex; flex-direction:column; justify-content:center; align-items:center; min-width:80px; border-left:1px dashed var(--bd); border-right:1px dashed var(--bd); }
+.lm-center-label { font-family:'JetBrains Mono',monospace; font-size:13px; font-weight:700; color:var(--gld); white-space:nowrap; }
 .lm-bottom-row { display:flex; justify-content:space-between; align-items:flex-start; padding:12px 0 0; margin-top:12px; border-top:1px solid var(--bd); gap:8px; flex-wrap:wrap; }
 .lm-bottom-box { font-family:'JetBrains Mono',monospace; font-size:13px; font-weight:600; color:var(--gldl); border:1px solid var(--bd); border-radius:3px; padding:7px 14px; background:var(--sf); }
 .lm-bottom-center { font-family:'JetBrains Mono',monospace; font-size:13px; font-weight:500; color:var(--gldl); text-align:center; flex:1; padding-top:7px; }
@@ -502,28 +503,25 @@ var MAP_BUILDERS={
   h+='<div class="lm-frame-top"><span>\u2191</span> ARENA B <span>\u2191</span></div>';
   h+='<div class="lm-frame-left">Cattle Crossing</div>';
   h+='<div class="lm-frame-right">Open Day Parking \u00b7 Barn C Stalls & RVs \u2192</div>';
-  // Private Barn — absolutely positioned, won't affect grid flow
-  h+='<div class="lm-private" style="top:220px;">Private Barn<br>Not for Use</div>';
-  // ── Grid: 300s | center aisle | 200s ──
   h+='<div class="barn-wrap">';
-  // 300s section
+  // ── 300s section with vertical 10'5" between row pairs ──
   h+='<div class="barn-section"><div class="section-label" id="sec300label">Stalls 300\u2013429</div><div role="grid" aria-labelledby="sec300label">';
   var p3=[[[417,418,419,420,421,422,423,424,425,426,427,428,429],[416,415,414,413,412,411,410,409,408,407,406,405,404]],[[391,392,393,394,395,396,397,398,399,400,401,402,403],[390,389,388,387,386,385,384,383,382,381,380,379,378]],[[365,366,367,368,369,370,371,372,373,374,375,376,377],[364,363,362,361,360,359,358,357,356,355,354,353,352]],[[339,340,341,342,343,344,345,346,347,348,349,350,351],[338,337,336,335,334,333,332,331,330,329,328,327,326]],[[313,314,315,316,317,318,319,320,321,322,323,324,325],[312,311,310,309,308,307,306,305,304,303,302,301,300]]];
   for(var i=0;i<p3.length;i++){
+    // Private Barn label — before the 3rd row pair (365s), inline but not disrupting row alignment
+    if(i===2)h+='<div class="lm-private">Private Barn<br>Not for Use</div>';
     h+='<div class="row-group">'+mkRow('stall',p3[i][0])+mkRow('stall',p3[i][1])+'</div>';
-    if(i<p3.length-1)h+='<div class="aisle">\u2014 10\u20325\u2033 \u2014</div>';
+    if(i<p3.length-1)h+='<div class="lm-aisle-v">\u2195 10\u20325\u2033</div>';
   }
   h+='</div></div>';
-  // Center aisle column with ← 19'0" → labels
-  h+='<div class="lm-center-aisle">';
-  for(var i=0;i<5;i++)h+='<div class="lm-center-aisle-label">\u2190 19\u20320\u2033 \u2192</div>';
-  h+='</div>';
-  // 200s section
+  // ── Center aisle — dashed borders, single 19'0" label ──
+  h+='<div class="lm-center-aisle"><div class="lm-center-label">\u2190 19\u20320\u2033 \u2192</div></div>';
+  // ── 200s section — no aisle labels, just spacing to match ──
   h+='<div class="barn-section"><div class="section-label" id="sec200label">Stalls 200\u2013299</div><div role="grid" aria-labelledby="sec200label">';
   var p2=[[[299,298,297,296,295,294,293,292,291,290],[280,281,282,283,284,285,286,287,288,289]],[[279,278,277,276,275,274,273,272,271,270],[260,261,262,263,264,265,266,267,268,269]],[[259,258,257,256,255,254,253,252,251,250],[240,241,242,243,244,245,246,247,248,249]],[[239,238,237,236,235,234,233,232,231,230],[220,221,222,223,224,225,226,227,228,229]],[[219,218,217,216,215,214,213,212,211,210],[200,201,202,203,204,205,206,207,208,209]]];
   for(var i=0;i<p2.length;i++){
     h+='<div class="row-group">'+mkRow('stall',p2[i][0])+mkRow('stall',p2[i][1])+'</div>';
-    if(i<p2.length-1)h+='<div class="aisle">\u2014 10\u20325\u2033 \u2014</div>';
+    if(i<p2.length-1)h+='<div style="height:28px;"></div>';
   }
   h+='</div></div>';
   h+='</div>';
