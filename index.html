@@ -503,6 +503,7 @@ function backToHub(){
   currentArea=null;productMap={};bookedMap={};closedSet=new Set();availCache={};cart=[];selectedCell=null;selectedLabel=null;mapReady=false;clearStaleTimer();
   document.getElementById('mapView').classList.remove('vis');document.getElementById('hubView').style.display='block';
   clearInfoPanel();closeWidget();updateUrl();
+  // NOTE: do NOT reset sessionActive/sessionItemCount here — cart persists via RES cookie
   var d=getDates();if(d.start&&d.end&&nightsBetween(d.start,d.end)>0)fetchHubAvailability(d.start,d.end);
 }
 
@@ -686,21 +687,24 @@ function updateSessionBanner(){
   var banner=document.getElementById('sessionBanner');
   if(sessionActive){
     banner.classList.add('vis');
-    var txt=sessionItemCount===1?'1 item in your cart':'sessionItemCount items in your cart';
     document.getElementById('sessionBannerText').textContent=
-      sessionItemCount>0?(sessionItemCount+' item'+(sessionItemCount!==1?'s':'')+' in your cart \u2014 add more or checkout'):'You have a booking in progress';
+      sessionItemCount>0?(sessionItemCount+' item'+(sessionItemCount!==1?'s':'')+' in your cart \u2014 add more or checkout'):'Booking in progress \u2014 add more stalls or checkout';
   }else{
     banner.classList.remove('vis');
   }
 }
 function sessionAddMore(){
-  // Close widget, scroll to map so user can pick another stall
   closeWidget();
+  // If we're on the hub, stay there so user can pick an area
+  // If we're in a map view, scroll to the grid
   var mapPanel=document.querySelector('.map-panel');
-  if(mapPanel)mapPanel.scrollIntoView({behavior:'smooth',block:'start'});
+  if(mapPanel&&document.getElementById('mapView').classList.contains('vis')){
+    mapPanel.scrollIntoView({behavior:'smooth',block:'start'});
+  }
 }
 function sessionCheckout(){
-  // Open the widget — the RES cookie means it will show the existing cart
+  // Make sure we're in a view where the widget section can show
+  // If on hub view, we need to show widget section anyway
   document.getElementById('widgetSection').classList.add('vis');
   document.getElementById('widgetStallLabel').textContent='View your cart and complete checkout';
   document.getElementById('widgetFrameHeader').textContent='Your booking cart';
@@ -710,7 +714,6 @@ function sessionCheckout(){
   setTimeout(function(){
     try{
       document.getElementById('widgetMsg').style.display='none';
-      // Load widget without specific item — RES cookie will show existing cart
       new CHECKFRONT.Widget({
         host:'circle-t-arena.manage.na1.bookingplatform.app',
         target:'CF_WIDGET_TARGET',
@@ -722,39 +725,44 @@ function sessionCheckout(){
     }
   },500);
 }
+function sessionClear(){
+  sessionActive=false;
+  sessionItemCount=0;
+  updateSessionBanner();
+}
 
-// ── POSTMESSAGE LISTENER (NEW: detect widget state changes) ─
+// ── POSTMESSAGE LISTENER (detect widget state changes) ──────
 // The Checkfront widget sends postMessage with height values.
 // When widget goes from checkout view (~2000+px) to category view (~340px),
 // it means the user clicked "Add to Booking". We detect this transition
-// to auto-collapse the widget and show the session banner.
+// to auto-collapse the widget and return user to the stall grid.
+// The session banner is already active from launchBooking() — this just
+// provides the auto-collapse convenience.
 var _widgetWasLarge=false;
 window.addEventListener('message',function(e){
-  // Only listen to messages from the Checkfront domain
   if(!e.origin||!e.origin.includes('bookingplatform'))return;
-  if(typeof e.data!=='number')return; // height values are numbers
+  if(typeof e.data!=='number')return;
 
   var height=e.data;
   var widgetVisible=document.getElementById('widgetSection').classList.contains('vis');
   if(!widgetVisible)return;
 
-  // Track if widget was showing checkout form (tall) vs category view (short)
   if(height>1500)_widgetWasLarge=true;
 
-  // Detect transition: was large (checkout/form), now small (category/inventory)
-  // This means user clicked "+ Add to Booking"
+  // Detect "Add to Booking" transition: was large, now small
   if(_widgetWasLarge&&height<500&&height>100){
     _widgetWasLarge=false;
-    sessionActive=true;
-    sessionItemCount++;
+    // Update banner text to reflect the item was added
     updateSessionBanner();
 
-    // Auto-collapse widget section and return user to the stall grid
+    // Auto-collapse widget and return to stall grid
     setTimeout(function(){
       closeWidget();
       var mapPanel=document.querySelector('.map-panel');
-      if(mapPanel)mapPanel.scrollIntoView({behavior:'smooth',block:'start'});
-    },600); // Small delay so the transition isn't jarring
+      if(mapPanel&&document.getElementById('mapView').classList.contains('vis')){
+        mapPanel.scrollIntoView({behavior:'smooth',block:'start'});
+      }
+    },600);
   }
 });
 
@@ -768,6 +776,10 @@ function bookSelected(){
 }
 function launchBooking(){
   if(cart.length===0)return;var first=cart[0],cl=cart.map(function(c){return c.label;}).join(', ');
+  // Activate session — from this point, a Checkfront cart session will exist
+  sessionActive=true;
+  sessionItemCount++;
+  updateSessionBanner();
   // Reset height tracking for this widget session
   _widgetWasLarge=false;
   document.getElementById('widgetSection').classList.add('vis');document.getElementById('widgetStallLabel').textContent=cl;
