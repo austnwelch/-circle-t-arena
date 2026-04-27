@@ -22,7 +22,7 @@
 }
 body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--tx); min-height:100vh; -webkit-font-smoothing:antialiased; }
 
-/* Header */
+/* ── Header ─────────────────────────────────────────────── */
 .hdr { background:var(--sf); border-bottom:1px solid var(--bd); padding:14px 20px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; position:sticky; top:0; z-index:100; }
 .brand { display:flex; align-items:center; gap:11px; }
 .logo { height:38px; flex-shrink:0; }
@@ -32,7 +32,7 @@ body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--tx); 
 .hdr-actions { display:flex; align-items:center; gap:10px; }
 .badge { font-size:10px; padding:4px 10px; border-radius:20px; background:var(--chk); border:1px solid var(--gld); color:var(--gldl); letter-spacing:0.06em; text-transform:uppercase; font-family:'JetBrains Mono',monospace; }
 
-/* ── Property Map Button ─────────────────────────────────── */
+/* ── Property Map Button (header — icon only on small screens) */
 .btn-propmap { display:inline-flex; align-items:center; gap:7px; padding:7px 14px; border-radius:20px; background:transparent; border:1px solid var(--gld); color:var(--gldl); font-size:11px; font-weight:600; letter-spacing:0.04em; text-transform:uppercase; font-family:'JetBrains Mono',monospace; cursor:pointer; transition:background 0.15s, color 0.15s, border-color 0.15s; white-space:nowrap; }
 .btn-propmap:hover { background:var(--gld); color:var(--bg); }
 .btn-propmap svg { width:16px; height:16px; flex-shrink:0; }
@@ -40,6 +40,11 @@ body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--tx); 
   .btn-propmap span.propmap-label { display:none; }
   .btn-propmap { padding:7px 10px; }
 }
+
+/* ── Hub property map button (full label below heading) ─── */
+.btn-propmap-hub { display:inline-flex; align-items:center; gap:8px; padding:9px 18px; border-radius:20px; background:transparent; border:1px solid var(--gld); color:var(--gldl); font-size:12px; font-weight:600; letter-spacing:0.04em; text-transform:uppercase; font-family:'JetBrains Mono',monospace; cursor:pointer; transition:background 0.15s, color 0.15s; white-space:nowrap; margin-bottom:20px; }
+.btn-propmap-hub:hover { background:var(--gld); color:var(--bg); }
+.btn-propmap-hub svg { width:15px; height:15px; flex-shrink:0; }
 
 /* ── Property Map Modal ──────────────────────────────────── */
 .propmap-overlay { display:none; position:fixed; inset:0; z-index:9999; background:rgba(0,0,0,0.85); backdrop-filter:blur(4px); -webkit-backdrop-filter:blur(4px); }
@@ -55,14 +60,14 @@ body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--tx); 
   .propmap-header { padding:12px 16px; }
   .propmap-title { font-size:16px; }
   .propmap-close-x { display:none; }
-  .propmap-body { padding:0; align-items:flex-start; padding-bottom:80px; overflow:scroll; -webkit-overflow-scrolling:touch; }
-  .propmap-img { max-width:none; width:max(100%, 900px); max-height:none; touch-action:manipulation; }
+  .propmap-body { padding:0 8px; align-items:flex-start; padding-bottom:80px; }
+  .propmap-img { max-width:none; width:max(100%, 900px); max-height:none; touch-action:pan-x pan-y pinch-zoom; }
   .propmap-close-bar { display:flex; align-items:center; justify-content:center; gap:8px; position:fixed; bottom:0; left:0; right:0; z-index:10000; padding:16px 20px; padding-bottom:max(16px, env(safe-area-inset-bottom)); background:var(--sf); border-top:2px solid var(--gld); font-family:'DM Sans',sans-serif; font-size:16px; font-weight:700; color:var(--gldl); cursor:pointer; -webkit-tap-highlight-color:transparent; }
   .propmap-close-bar:active { background:var(--gld); color:var(--bg); }
   .propmap-close-bar svg { width:18px; height:18px; flex-shrink:0; }
 }
 
-/* Date bar */
+/* ── Date bar ────────────────────────────────────────────── */
 .datebar { background:var(--sf); border-bottom:1px solid var(--bd); padding:12px 20px; display:flex; align-items:flex-end; gap:12px; flex-wrap:wrap; }
 .field { display:flex; flex-direction:column; gap:4px; }
 .field label { font-size:10px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:var(--txd); font-family:'JetBrains Mono',monospace; }
@@ -74,14 +79,25 @@ body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--tx); 
 .progress-label { font-size:11px; color:var(--txd); font-family:'JetBrains Mono',monospace; align-self:flex-end; padding-bottom:8px; white-space:nowrap; min-width:140px; transition:color 0.3s; }
 .progress-label.done { color:var(--grnl); }
 .progress-label .stale-link { color:var(--gldl); cursor:pointer; text-decoration:underline; margin-left:4px; }
-
 .progress-wrap { width:100%; height:3px; background:var(--bd); }
 .progress-bar { height:100%; background:var(--gld); width:0%; transition:width 0.4s ease; }
 
-/* Hub */
+/* ── Session pill ────────────────────────────────────────── */
+/* Slim sticky bar shown once a booking is in progress.
+   "Return to Cart" re-renders the widget with the last item+slip,
+   which causes the booking platform to show its own "booking in progress"
+   message so the customer can proceed or add more. */
+.session-pill { display:none; position:sticky; top:0; z-index:99; background:var(--grnd); border-bottom:2px solid var(--grn); padding:8px 20px; align-items:center; justify-content:space-between; gap:10px; }
+.session-pill.vis { display:flex; }
+.session-pill-text { display:flex; align-items:center; gap:8px; font-size:13px; font-weight:600; color:var(--grnl); white-space:nowrap; }
+.session-pill-dot { width:8px; height:8px; border-radius:50%; background:var(--grnl); flex-shrink:0; animation:pulse 1.5s ease-in-out infinite alternate; }
+.btn-return { padding:6px 14px; border-radius:var(--radius); background:var(--gld); color:var(--bg); border:none; font-family:'DM Sans',sans-serif; font-size:13px; font-weight:700; cursor:pointer; white-space:nowrap; transition:background 0.15s; flex-shrink:0; }
+.btn-return:hover { background:var(--gldl); }
+
+/* ── Hub ─────────────────────────────────────────────────── */
 .hub { padding:20px; max-width:1100px; margin:0 auto; }
 .hub-title { font-family:'Playfair Display',serif; font-size:24px; font-weight:700; margin-bottom:6px; }
-.hub-subtitle { font-size:13px; color:var(--txd); margin-bottom:20px; }
+.hub-subtitle { font-size:13px; color:var(--txd); margin-bottom:14px; }
 .hub-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(300px, 1fr)); gap:14px; }
 .area-card { background:var(--sf); border:1px solid var(--bd); border-radius:8px; padding:18px 20px; cursor:pointer; transition:border-color 0.2s, transform 0.15s, box-shadow 0.2s; position:relative; overflow:hidden; }
 .area-card:hover { border-color:var(--gld); transform:translateY(-2px); box-shadow:0 8px 24px rgba(0,0,0,0.3); }
@@ -100,15 +116,13 @@ body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--tx); 
 .ac-checking { font-size:11px; color:var(--txd); font-family:'JetBrains Mono',monospace; margin-top:8px; display:none; }
 .area-card.loading .ac-checking { display:block; }
 
-/* Map view */
+/* ── Map view ────────────────────────────────────────────── */
 .map-view { display:none; }
 .map-view.vis { display:block; }
 .map-back { display:inline-flex; align-items:center; gap:6px; padding:10px 16px; margin:16px 20px 0; background:var(--sf3); border:1px solid var(--gld); border-radius:var(--radius); color:var(--gldl); font-size:14px; font-weight:600; cursor:pointer; transition:background 0.15s, color 0.15s; font-family:'DM Sans',sans-serif; }
 .map-back:hover { background:var(--gld); color:var(--bg); }
-
 .main { display:grid; grid-template-columns:1fr 360px; min-height:calc(100vh - 180px); }
 @media(max-width:900px){ .main { grid-template-columns:1fr; } }
-
 .map-panel { padding:20px; border-right:1px solid var(--bd); overflow-x:auto; }
 .map-title { font-family:'Playfair Display',serif; font-size:22px; font-weight:700; margin-bottom:5px; }
 .map-subtitle { font-size:12px; color:var(--txd); margin-bottom:16px; font-family:'JetBrains Mono',monospace; }
@@ -116,12 +130,9 @@ body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--tx); 
 .spin { width:28px; height:28px; border:2px solid var(--bd); border-top-color:var(--gld); border-radius:50%; animation:spin 0.7s linear infinite; }
 @keyframes spin { to { transform:rotate(360deg); } }
 .map-loading p { font-size:13px; color:var(--txd); }
-
 .barn-wrap { display:flex; gap:50px; flex-wrap:wrap; }
 .barn-section { flex:1; min-width:280px; }
-@media(max-width:900px){
-  .barn-wrap { gap:20px; }
-}
+@media(max-width:900px){ .barn-wrap { gap:20px; } }
 .section-label { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.1em; color:var(--gldd); font-family:'JetBrains Mono',monospace; margin-bottom:8px; padding-bottom:5px; border-bottom:1px solid var(--bd); }
 .row-group { margin-bottom:10px; }
 .stall-row { display:flex; gap:2px; margin-bottom:2px; }
@@ -129,6 +140,7 @@ body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--tx); 
 .rv-row { display:flex; gap:3px; flex-wrap:wrap; margin-bottom:4px; }
 .block-wrap { display:flex; gap:16px; flex-wrap:wrap; }
 
+/* ── Stall cells ─────────────────────────────────────────── */
 .sc { width:40px; height:33px; display:flex; align-items:center; justify-content:center; border-radius:4px; font-family:'JetBrains Mono',monospace; font-size:10px; font-weight:600; cursor:pointer; border:1.5px solid var(--bd); background:var(--neu); color:var(--txm); position:relative; transition:transform 0.1s,box-shadow 0.1s,border-color 0.2s,background 0.2s; flex-shrink:0; user-select:none; }
 .sc::after { content:''; position:absolute; top:50%; left:50%; width:44px; height:44px; transform:translate(-50%,-50%); }
 .sc:hover { transform:scale(1.15); z-index:10; box-shadow:0 4px 12px rgba(0,0,0,0.5); }
@@ -140,10 +152,10 @@ body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--tx); 
 .sc.selected { transform:scale(1.15); z-index:10; box-shadow:0 0 0 2px var(--gld),0 4px 14px rgba(0,0,0,0.6); border-color:var(--gld) !important; }
 .sc.in-cart { box-shadow:0 0 0 2px var(--gldl); border-color:var(--gldl) !important; }
 .rc { width:40px; height:28px; font-size:9px; }
-/* Turnout stalls — styled same as regular but labeled TO */
+/* Turnout stalls — dashed border distinguishes from regular stalls */
 .sc.turnout-cell { border-style:dashed; }
 
-/* Info panel */
+/* ── Info panel ──────────────────────────────────────────── */
 .info-panel { background:var(--sf); display:flex; flex-direction:column; position:sticky; top:61px; height:calc(100vh - 61px); overflow-y:auto; }
 .info-empty { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:30px; text-align:center; gap:10px; }
 .info-empty .icon { font-size:36px; opacity:0.3; }
@@ -180,16 +192,7 @@ body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--tx); 
 .btn-clear { width:100%; padding:9px; background:transparent; color:var(--txd); border:1px solid var(--bd); border-radius:var(--radius); font-family:'DM Sans',sans-serif; font-size:13px; cursor:pointer; margin-top:8px; transition:border-color 0.15s,color 0.15s; }
 .btn-clear:hover { border-color:var(--bdl); color:var(--tx); }
 
-.cart-block { padding:14px 18px; border-bottom:1px solid var(--bd); display:none; }
-.cart-block.vis { display:block; }
-.cart-title { font-size:10px; text-transform:uppercase; letter-spacing:0.1em; color:var(--txd); font-family:'JetBrains Mono',monospace; margin-bottom:8px; }
-.cart-item { display:flex; justify-content:space-between; align-items:center; padding:7px 0; border-bottom:1px solid var(--bd); font-size:13px; }
-.cart-item:last-child { border-bottom:none; }
-.cart-item .ci-name { color:var(--tx); }
-.cart-item .ci-remove { color:var(--redl); cursor:pointer; font-size:11px; padding:3px 7px; border:1px solid var(--red); border-radius:3px; background:transparent; font-family:'JetBrains Mono',monospace; transition:background 0.15s; }
-.cart-item .ci-remove:hover { background:var(--redd); }
-.cart-count { font-size:12px; color:var(--gldl); font-family:'JetBrains Mono',monospace; margin-top:6px; }
-
+/* ── Widget section ──────────────────────────────────────── */
 .widget-section { display:none; padding:20px; border-top:2px solid var(--gld); background:var(--sf2); }
 .widget-section.vis { display:block; }
 .widget-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
@@ -204,10 +207,12 @@ body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--tx); 
 .widget-hint strong { color:#2a2010; }
 .widget-loading { font-size:13px; color:var(--txd); text-align:center; padding:20px; }
 
+/* ── Fallback banner ─────────────────────────────────────── */
 .fallback-banner { display:none; padding:14px 20px; background:rgba(80,60,20,0.3); border-bottom:1px solid var(--bd); text-align:center; font-size:14px; color:var(--txd); }
 .fallback-banner a { color:var(--gldl); text-decoration:underline; }
 .fallback-banner.vis { display:block; }
 
+/* ── Legend ──────────────────────────────────────────────── */
 .legend { display:flex; gap:14px; padding:12px 20px; border-top:1px solid var(--bd); background:var(--sf); flex-wrap:wrap; }
 .li { display:flex; align-items:center; gap:6px; font-size:11px; color:var(--txd); }
 .lw { width:16px; height:10px; border-radius:2px; border:1.5px solid; }
@@ -217,51 +222,25 @@ body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--tx); 
 .lw.chk { background:var(--chk); border-color:var(--gld); }
 .lw.cart { background:var(--chk); border-color:var(--gldl); box-shadow:0 0 0 1px var(--gldl); }
 
-/* ── Mobile: info panel as compact bottom sheet ────────────── */
+/* ── Layout toggle ───────────────────────────────────────── */
+.layout-toggle-btn { display:inline-flex; align-items:center; gap:6px; padding:8px 14px; margin-bottom:14px; background:var(--sf3); border:1px solid var(--bd); border-radius:var(--radius); color:var(--txd); font-size:12px; font-family:'JetBrains Mono',monospace; cursor:pointer; transition:border-color 0.15s, color 0.15s, background 0.15s; }
+.layout-toggle-btn:hover { border-color:var(--gld); color:var(--gldl); }
+.layout-toggle-btn.active { border-color:var(--gld); color:var(--gldl); background:var(--chk); }
+.layout-toggle-btn .toggle-arrow { transition:transform 0.2s; font-size:9px; }
+.layout-toggle-btn.active .toggle-arrow { transform:rotate(90deg); }
+.layout-image-wrap { display:none; margin-bottom:18px; border:1px solid var(--bd); border-radius:var(--radius); overflow:hidden; background:var(--sf); }
+.layout-image-wrap.vis { display:block; }
+/* Responsive barn layout images — contained on desktop, horizontally scrollable on mobile */
+.layout-image-wrap img { width:100%; height:auto; display:block; max-height:380px; object-fit:contain; filter:invert(0.88) hue-rotate(180deg); opacity:0.85; }
 @media(max-width:900px){
-  /* FIX 1: restore max-height cap (was none) and proper overflow (was visible)
-     so the sheet is constrained and never shows a dark void while loading */
-  .info-panel { position:fixed; bottom:0; left:0; right:0; height:auto; max-height:65vh; border-top:2px solid var(--gld); transform:translateY(100%); transition:transform 0.25s ease-out; z-index:200; border-right:none; display:none; overflow-y:auto; -webkit-overflow-scrolling:touch; box-shadow:0 -10px 30px rgba(0,0,0,0.45); }
-  .info-panel.vis { display:flex; transform:translateY(0); }
-  /* Compact mode: when widget is open, shrink info panel to a thin bar */
-  .info-panel.compact { max-height:none; height:auto; overflow:hidden; }
-  .info-panel.compact .avail-banner,
-  .info-panel.compact .details-block,
-  .info-panel.compact .book-block,
-  .info-panel.compact .cart-block { display:none !important; }
-  .info-panel.compact .price-block { padding:8px 18px; border-bottom:none; }
-  .info-panel.compact .price-amount { font-size:18px; }
-  .info-panel.compact .price-unit,
-  .info-panel.compact .price-label { display:none; }
-  .info-panel.compact .info-header { padding:10px 18px 6px; }
-  .info-panel.compact .stall-id { font-size:16px; }
-  .info-panel.compact .stall-meta { display:none; }
-  .map-panel { border-right:none; /* FIX 3: increased from 180px so grid rows aren't hidden behind sheet */ padding-bottom:240px; }
-  .main { grid-template-columns:1fr; }
-  .hub-grid { grid-template-columns:1fr; }
-  /* Hide header on mobile when widget is visible to maximize space */
-  body.widget-active .hdr { display:none; }
-  body.widget-active .datebar { display:none; }
-  body.widget-active .progress-wrap { display:none; }
-  /* FIX 2: hide redundant elements inside the sheet to reclaim vertical space
-     so the Book button is never pushed below the visible area */
-  .info-panel .price-label { display:none; }
-  .info-panel .price-unit { display:none; }
-  .info-panel .btn-clear { display:none; }
-  .info-panel .stall-meta { display:none; }
-  .info-panel .details-block { display:none; }
-  .info-panel .avail-banner { padding:8px 16px; font-size:12px; }
-  .info-panel .info-header { padding:10px 16px 8px; }
-  .info-panel .stall-id { font-size:20px; }
-  .info-panel .price-block { padding:10px 16px; }
-  .info-panel .price-amount { font-size:22px; }
-  .info-panel .book-block { padding:10px 16px; padding-bottom:max(14px, env(safe-area-inset-bottom)); }
-  .info-panel .btn-book { min-height:48px; }
-  .info-panel .cart-block { padding:10px 16px; padding-bottom:max(14px, env(safe-area-inset-bottom)); }
+  .layout-image-wrap { overflow-x:auto; -webkit-overflow-scrolling:touch; max-width:100%; }
+  .layout-image-wrap img { width:auto; min-width:600px; max-width:none; max-height:none; object-fit:initial; }
 }
+
+/* ── Error ───────────────────────────────────────────────── */
 .err { padding:12px 16px; background:#2a1010; border:1px solid var(--red); border-radius:var(--radius); color:#c06060; font-size:13px; margin:16px 0; }
 
-/* ── Landmark frame ── */
+/* ── Landmark frame ──────────────────────────────────────── */
 .lm-frame { position:relative; border:1px solid var(--bd); border-radius:6px; padding:44px 40px 12px; margin-bottom:12px; }
 .lm-frame-top { position:absolute; top:0; left:0; right:0; text-align:center; padding:11px 0; font-family:'JetBrains Mono',monospace; font-size:15px; font-weight:700; color:var(--gldl); letter-spacing:0.1em; text-transform:uppercase; border-bottom:1px solid var(--bd); background:var(--sf); border-radius:6px 6px 0 0; }
 .lm-frame-top span { color:var(--gld); margin:0 8px; }
@@ -280,32 +259,51 @@ body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--tx); 
 .lm-footer-main { font-family:'Playfair Display',serif; font-size:20px; font-weight:700; color:var(--gldl); margin-bottom:6px; letter-spacing:0.14em; }
 .lm-footer-sub { font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--gldl); line-height:1.6; }
 
-/* ── Layout toggle ────── */
-.layout-toggle-btn { display:inline-flex; align-items:center; gap:6px; padding:8px 14px; margin-bottom:14px; background:var(--sf3); border:1px solid var(--bd); border-radius:var(--radius); color:var(--txd); font-size:12px; font-family:'JetBrains Mono',monospace; cursor:pointer; transition:border-color 0.15s, color 0.15s, background 0.15s; }
-.layout-toggle-btn:hover { border-color:var(--gld); color:var(--gldl); }
-.layout-toggle-btn.active { border-color:var(--gld); color:var(--gldl); background:var(--chk); }
-.layout-toggle-btn .toggle-arrow { transition:transform 0.2s; font-size:9px; }
-.layout-toggle-btn.active .toggle-arrow { transform:rotate(90deg); }
-.layout-image-wrap { display:none; margin-bottom:18px; border:1px solid var(--bd); border-radius:var(--radius); overflow:hidden; background:var(--sf); max-width:880px; }
-.layout-image-wrap.vis { display:block; }
-.layout-image-wrap img { width:100%; height:auto; display:block; max-height:380px; object-fit:contain; filter:invert(0.88) hue-rotate(180deg); opacity:0.85; }
+/* ── Mobile overrides ────────────────────────────────────── */
 @media(max-width:900px){
-  .layout-image-wrap { overflow-x:auto; -webkit-overflow-scrolling:touch; }
-  .layout-image-wrap img { width:auto; min-width:700px; max-width:none; max-height:none; }
-}
+  /* Info panel as bottom sheet — capped, scrollable, never causes dark void */
+  .info-panel { position:fixed; bottom:0; left:0; right:0; height:auto; max-height:65vh; border-top:2px solid var(--gld); transform:translateY(100%); transition:transform 0.25s ease-out; z-index:200; border-right:none; display:none; overflow-y:auto; -webkit-overflow-scrolling:touch; box-shadow:0 -8px 24px rgba(0,0,0,0.5); }
+  .info-panel.vis { display:flex; transform:translateY(0); }
+  /* Trim info panel on mobile — widget handles full detail display */
+  .info-panel .price-label { display:none; }
+  .info-panel .price-unit { display:none; }
+  .info-panel .details-block { display:none; }
+  .info-panel .btn-clear { display:none; }
+  .info-panel .stall-meta { display:none; }
+  .info-panel .info-header { padding:10px 16px 8px; }
+  .info-panel .stall-id { font-size:20px; }
+  .info-panel .avail-banner { padding:8px 16px; font-size:12px; }
+  .info-panel .price-block { padding:10px 16px; }
+  .info-panel .price-amount { font-size:22px; }
+  .info-panel .book-block { padding:10px 16px; padding-bottom:max(14px, env(safe-area-inset-bottom)); }
+  .info-panel .btn-book { min-height:48px; }
+  /* Extra padding so bottom stall rows aren't hidden behind the sheet */
+  .map-panel { border-right:none; padding-bottom:240px; }
+  .main { grid-template-columns:1fr; }
+  .hub-grid { grid-template-columns:1fr; }
 
-/* ── Session / Cart Banner ────── */
-.session-banner { display:none; padding:14px 20px; background:var(--grnd); border-bottom:2px solid var(--grn); align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; }
-.session-banner.vis { display:flex; }
-.session-banner-text { display:flex; align-items:center; gap:8px; font-size:14px; font-weight:600; color:var(--grnl); }
-.session-banner-dot { width:9px; height:9px; border-radius:50%; background:var(--grnl); flex-shrink:0; animation:pulse 1.5s ease-in-out infinite alternate; }
-.session-banner-actions { display:flex; gap:8px; }
-.btn-session { padding:8px 16px; border-radius:var(--radius); font-family:'DM Sans',sans-serif; font-size:13px; font-weight:600; cursor:pointer; transition:background 0.15s, transform 0.1s; border:none; }
-.btn-session:active { transform:scale(0.97); }
-.btn-session-checkout { background:var(--gld); color:var(--bg); }
-.btn-session-checkout:hover { background:var(--gldl); }
-.btn-session-continue { background:var(--sf3); color:var(--gldl); border:1px solid var(--bd); }
-.btn-session-continue:hover { border-color:var(--gld); }
+  /* Widget full-screen overlay on mobile.
+     position:fixed; inset:0 fills the iframe viewport exactly,
+     no scrolling to reach it, no WordPress chrome competing. */
+  .widget-section.vis { position:fixed; inset:0; z-index:1000; display:flex; flex-direction:column; background:var(--sf2); border-top:none; padding:0; overflow:hidden; }
+  .widget-header { padding:12px 16px; border-bottom:1px solid var(--bd); background:var(--sf2); flex-shrink:0; }
+  .widget-header h3 { font-size:16px; }
+  .widget-frame { flex:1; display:flex; flex-direction:column; overflow:hidden; border:none; border-radius:0; }
+  .widget-frame-header { flex-shrink:0; padding:9px 14px; }
+  .widget-hint { flex-shrink:0; font-size:13px; padding:9px 14px; }
+  .widget-wrap { flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; padding:8px; min-height:0; }
+  /* Hide app chrome while widget overlay is open */
+  body.widget-active .hdr,
+  body.widget-active .datebar,
+  body.widget-active .progress-wrap,
+  body.widget-active .legend,
+  body.widget-active .fallback-banner { display:none !important; }
+  body.widget-active .map-view { display:none !important; }
+  body.widget-active .hub { display:none !important; }
+  body.widget-active .info-panel { display:none !important; }
+  /* Session pill stays hidden during widget — it's shown when widget closes */
+  body.widget-active .session-pill { display:none !important; }
+}
 </style>
 </head>
 <body>
@@ -348,16 +346,16 @@ body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--tx); 
   Having trouble? <a href="https://circle-t-arena.manage.na1.bookingplatform.app/reserve" target="_blank">Book directly here</a>
 </div>
 
-<!-- SESSION BANNER -->
-<div class="session-banner" id="sessionBanner">
-  <div class="session-banner-text">
-    <div class="session-banner-dot"></div>
-    <span id="sessionBannerText">You have a booking in progress</span>
+<!-- ── SESSION PILL ───────────────────────────────────────── -->
+<!-- Shown once a booking is in progress. "Return to Cart" re-renders
+     the widget with the last item+slip so the booking platform shows
+     its own "booking in progress" message and lets the customer proceed. -->
+<div class="session-pill" id="sessionPill">
+  <div class="session-pill-text">
+    <div class="session-pill-dot"></div>
+    <span>Cart saved — pick another stall or finish booking</span>
   </div>
-  <div class="session-banner-actions">
-    <button class="btn-session btn-session-continue" onclick="sessionAddMore()">+ Add More</button>
-    <button class="btn-session btn-session-checkout" onclick="sessionCheckout()">View Cart / Checkout</button>
-  </div>
+  <button class="btn-return" onclick="returnToBooking()">Return to Cart →</button>
 </div>
 
 <div class="datebar">
@@ -374,14 +372,18 @@ body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--tx); 
 </div>
 <div class="progress-wrap"><div class="progress-bar" id="progressBar"></div></div>
 
-<!-- HUB VIEW -->
+<!-- ── HUB VIEW ──────────────────────────────────────────── -->
 <div class="hub" id="hubView">
   <div class="hub-title">Choose Your Area</div>
   <div class="hub-subtitle">Select dates above, then pick an area to view the interactive map and reserve.</div>
+  <button class="btn-propmap-hub" onclick="openPropertyMap()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
+    View Property Map
+  </button>
   <div class="hub-grid" id="hubGrid"></div>
 </div>
 
-<!-- MAP VIEW -->
+<!-- ── MAP VIEW ──────────────────────────────────────────── -->
 <div class="map-view" id="mapView">
   <button class="map-back" onclick="backToHub()" aria-label="Back to area selection">&#8249; All Areas</button>
   <div class="main">
@@ -420,21 +422,16 @@ body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--tx); 
             <button class="btn-clear" onclick="clearSelection()">&#8249; Back to map</button>
           </div>
         </div>
-        <div class="cart-block" id="cartBlock">
-          <div class="cart-title">Your Cart</div>
-          <div id="cartItems"></div>
-          <div class="cart-count" id="cartCount"></div>
-          <button class="btn-book" id="btnReserveCart" onclick="launchBooking()" style="margin-top:10px;">Book Now</button>
-        </div>
       </div>
     </div>
   </div>
 </div>
 
+<!-- ── WIDGET SECTION ─────────────────────────────────────── -->
 <div class="widget-section" id="widgetSection">
   <div class="widget-header">
     <div><h3 id="widgetTitle">Complete Your Reservation</h3><div class="widget-stall" id="widgetStallLabel"></div></div>
-    <button class="btn-widget-back" onclick="closeWidget()">✕ Close</button>
+    <button class="btn-widget-back" onclick="closeWidget()">✕ Back to map</button>
   </div>
   <div class="widget-frame">
     <div class="widget-frame-header" id="widgetFrameHeader">Completing reservation...</div>
@@ -467,9 +464,6 @@ function openPropertyMap(){
   overlay.classList.add('vis');
   document.body.style.overflow='hidden';
   document.addEventListener('keydown',_propmapEscHandler);
-  // Prevent parent page zoom on mobile — lock viewport
-  var vp=document.querySelector('meta[name="viewport"]');
-  if(vp)vp._origContent=vp.content;
 }
 function closePropertyMap(){
   var overlay=document.getElementById('propmapOverlay');
@@ -481,9 +475,7 @@ function _propmapEscHandler(e){if(e.key==='Escape')closePropertyMap();}
 document.addEventListener('click',function(e){
   var overlay=document.getElementById('propmapOverlay');
   if(!overlay.classList.contains('vis'))return;
-  if(e.target===document.getElementById('propmapBody')){
-    closePropertyMap();
-  }
+  if(e.target===document.getElementById('propmapBody'))closePropertyMap();
 });
 
 var AREAS=[
@@ -495,12 +487,17 @@ var AREAS=[
   {id:'vip-hill',name:'VIP Hill',desc:'26 VIP stalls and 9 VIP RV sites on the hill.',categories:'3746,3749',subtitle:'VIP Stalls 430\u2013455 \u00b7 VIP RV Sites 242\u2013250'}
 ];
 
-var productMap={},bookedMap={},closedSet=new Set(),availCache={},cart=[],selectedCell=null,selectedLabel=null,currentArea=null,batchRunId=0,mapReady=false,pendingBatch=false,isTouch=('ontouchstart' in window)||navigator.maxTouchPoints>0,lastFetchedAt=null,staleTimer=null,hubAvailData={};
+var productMap={},bookedMap={},closedSet=new Set(),availCache={},selectedCell=null,selectedLabel=null,currentArea=null,batchRunId=0,mapReady=false,pendingBatch=false,isTouch=('ontouchstart' in window)||navigator.maxTouchPoints>0,lastFetchedAt=null,staleTimer=null,hubAvailData={};
 
+// Session tracking.
+// lastBookedItemId + lastBookedSlip allow "Return to Cart" to re-render
+// the widget with the last item, which causes the booking platform to detect
+// its own session cookie and show "You have a booking in progress."
 var sessionActive=false;
-var widgetHeightHistory=[];
-var lastWidgetHeight=0;
 var sessionItemCount=0;
+var lastBookedItemId=null;
+var lastBookedSlip=null;
+var _widgetWasLarge=false;
 
 function today(){var d=new Date();d.setHours(0,0,0,0);return d;}
 function fmtInput(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
@@ -518,10 +515,11 @@ function initDates(){
   if(ua){var area=AREAS.find(function(a){return a.id===ua;});if(area)setTimeout(function(){enterArea(area);},100);}
 }
 function onDateChange(){
-  updateNightsPill();bookedMap={};closedSet=new Set();availCache={};cart=[];updateCartUI();batchRunId++;hubAvailData={};
+  updateNightsPill();bookedMap={};closedSet=new Set();availCache={};batchRunId++;hubAvailData={};
   document.querySelectorAll('.sc').forEach(function(c){c.classList.remove('available','unavailable','checking','selected','in-cart');});
   clearInfoPanel();closeWidget();updateUrl();clearStaleTimer();
-  sessionActive=false;sessionItemCount=0;updateSessionBanner();
+  // Reset session on date change — new dates mean a fresh booking
+  sessionActive=false;sessionItemCount=0;lastBookedItemId=null;lastBookedSlip=null;updateSessionPill();
   var s=document.getElementById('startDate').value,e=document.getElementById('endDate').value;
   if(!s||!e||nightsBetween(s,e)<=0){setProgressLabel('Select dates to check availability',false);setProgressBar(0);renderHubCards();return;}
   if(currentArea)runBookingsCheck(s,e);
@@ -538,6 +536,44 @@ function updateUrl(){
 function startStaleTimer(){clearStaleTimer();lastFetchedAt=Date.now();staleTimer=setInterval(function(){var el=Math.round((Date.now()-lastFetchedAt)/60000);if(el>=2){var lb=document.getElementById('progressLabel'),d=getDates();if(d.start&&d.end&&nightsBetween(d.start,d.end)>0){lb.innerHTML='Checked '+el+' min ago<span class="stale-link" onclick="refreshAvailability()">\u21bb Refresh</span>';lb.className='progress-label';}}},30000);}
 function clearStaleTimer(){if(staleTimer){clearInterval(staleTimer);staleTimer=null;}}
 function refreshAvailability(){var d=getDates();if(d.start&&d.end&&nightsBetween(d.start,d.end)>0){bookedMap={};closedSet=new Set();availCache={};if(currentArea)runBookingsCheck(d.start,d.end);fetchHubAvailability(d.start,d.end);}}
+
+// ── SESSION PILL ─────────────────────────────────────────────
+function updateSessionPill(){
+  document.getElementById('sessionPill').classList.toggle('vis',sessionActive);
+}
+// Re-renders the widget with the last item+slip.
+// The booking platform detects its session cookie and shows
+// "You have a booking in progress" so the customer can proceed.
+function returnToBooking(){
+  if(!lastBookedItemId||!lastBookedSlip){showFallback();return;}
+  var d=getDates();
+  document.getElementById('widgetTitle').textContent='Your Reservation';
+  document.getElementById('widgetStallLabel').textContent='Returning to your cart...';
+  document.getElementById('widgetFrameHeader').textContent='Your booking in progress';
+  document.getElementById('widgetHint').innerHTML='Your cart is saved. Use <strong>+ Add to Booking</strong> to add more stalls, or continue through the prompts to complete your reservation.';
+  document.getElementById('widgetMsg').style.display='block';
+  document.getElementById('CF_WIDGET_TARGET').innerHTML='';
+  document.getElementById('widgetSection').classList.add('vis');
+  if(isTouch)document.body.classList.add('widget-active');
+  setTimeout(function(){
+    try{
+      document.getElementById('widgetMsg').style.display='none';
+      new CHECKFRONT.Widget({
+        host:'circle-t-arena.manage.na1.bookingplatform.app',
+        target:'CF_WIDGET_TARGET',
+        item_id:String(lastBookedItemId),
+        slip:lastBookedSlip,
+        date:fmtApi(d.start),
+        end_date:fmtApi(d.end),
+        provider:'droplet',
+        options:'hidesearch,hidedates'
+      }).render();
+    }catch(err){
+      document.getElementById('widgetMsg').style.display='block';
+      document.getElementById('widgetMsg').innerHTML='Could not reload. <a href="'+FALLBACK_URL+'" target="_blank" style="color:var(--gldl);">Continue booking here</a>';
+    }
+  },400);
+}
 
 // ── HUB ─────────────────────────────────────────────────────
 function renderHubCards(){
@@ -605,17 +641,18 @@ function initLayoutToggle(area){
   imgWrap.classList.remove('vis');wrap.style.display='block';
 }
 function enterArea(area){
-  currentArea=area;productMap={};bookedMap={};closedSet=new Set();availCache={};cart=[];mapReady=false;pendingBatch=false;selectedCell=null;selectedLabel=null;
+  currentArea=area;productMap={};bookedMap={};closedSet=new Set();availCache={};mapReady=false;pendingBatch=false;selectedCell=null;selectedLabel=null;
   document.getElementById('hubView').style.display='none';document.getElementById('mapView').classList.add('vis');
   document.getElementById('mapTitle').textContent=area.name;document.getElementById('mapSubtitle').textContent=area.subtitle;
   initLayoutToggle(area);
   document.getElementById('mapContent').innerHTML='';document.getElementById('mapLoading').style.display='flex';
-  clearInfoPanel();updateCartUI();updateUrl();loadAreaProducts(area);
+  clearInfoPanel();updateUrl();loadAreaProducts(area);
 }
 function backToHub(){
-  currentArea=null;productMap={};bookedMap={};closedSet=new Set();availCache={};cart=[];selectedCell=null;selectedLabel=null;mapReady=false;clearStaleTimer();
+  currentArea=null;productMap={};bookedMap={};closedSet=new Set();availCache={};selectedCell=null;selectedLabel=null;mapReady=false;clearStaleTimer();
   document.getElementById('mapView').classList.remove('vis');document.getElementById('hubView').style.display='block';
   clearInfoPanel();closeWidget();updateUrl();
+  // NOTE: do NOT reset sessionActive here — booking session persists via the platform cookie
   var d=getDates();if(d.start&&d.end&&nightsBetween(d.start,d.end)>0)fetchHubAvailability(d.start,d.end);
 }
 
@@ -624,13 +661,11 @@ async function loadAreaProducts(area){
     var resp=await fetch('/api/products?categories='+area.categories);if(!resp.ok)throw new Error('API '+resp.status);
     var data=await resp.json();if(data.error)throw new Error(data.error);
     var products=data.products||[];
-    for(var i=0;i<products.length;i++){var p=products[i],name=p.name||'';
+    for(var i=0;i<products.length;i++){
+      var p=products[i],name=p.name||'';
       // ── TURNOUT FIX: detect "turn out" before generic stall match ──
       var toMatch=name.match(/turn\s*out.*?(\d+)/i);
-      if(toMatch){
-        productMap['to_'+parseInt(toMatch[1])]={itemId:p.id,name:name};
-        continue;
-      }
+      if(toMatch){productMap['to_'+parseInt(toMatch[1])]={itemId:p.id,name:name};continue;}
       var sm=name.match(/stall\s+(\d+)/i),rm=name.match(/rv\s+(\d+)/i)||name.match(/rv(\d+)/i);
       if(sm)productMap['s_'+parseInt(sm[1])]={itemId:p.id,name:name};
       else if(rm)productMap['r_'+parseInt(rm[1])]={itemId:p.id,name:name};
@@ -638,7 +673,10 @@ async function loadAreaProducts(area){
     buildAreaMap(area);document.getElementById('mapLoading').style.display='none';mapReady=true;
     var d=getDates();if(d.start&&d.end&&nightsBetween(d.start,d.end)>0)runBookingsCheck(d.start,d.end);
     var params=new URLSearchParams(window.location.search),us=params.get('stall');
-    if(us){var cell=document.querySelector('.sc[data-stall="'+us+'"]')||document.querySelector('.sc[data-rv="'+us+'"]')||document.querySelector('.sc[data-turnout="'+us+'"]');if(cell)setTimeout(function(){cell.click();},800);}
+    if(us){
+      var cell=document.querySelector('.sc[data-stall="'+us+'"]')||document.querySelector('.sc[data-rv="'+us+'"]')||document.querySelector('.sc[data-turnout="'+us+'"]');
+      if(cell)setTimeout(function(){cell.click();},800);
+    }
   }catch(err){document.getElementById('mapLoading').innerHTML='<div class="err">Could not load: '+(err.message||err)+'. <a href="'+FALLBACK_URL+'" target="_blank" style="color:var(--gldl);">Book directly here</a></div>';showFallback();}
 }
 
@@ -657,7 +695,6 @@ function mkCell(type,num){
 }
 function mkRow(type,nums){var h='<div class="stall-row" role="row">';for(var i=0;i<nums.length;i++){if(nums[i]==='|')h+='</div><div class="stall-row" role="row">';else h+=mkCell(type,nums[i]);}return h+'</div>';}
 function mkRvRow(nums){var h='<div class="rv-row" role="row">';for(var i=0;i<nums.length;i++){if(nums[i]==='|')h+='<div style="width:10px"></div>';else h+=mkCell('rv',nums[i]);}return h+'</div>';}
-
 function buildAreaMap(area){var fn=MAP_BUILDERS[area.id];if(!fn){document.getElementById('mapContent').innerHTML='<div class="err">Map not found for '+area.name+'</div>';return;}document.getElementById('mapContent').innerHTML=fn();}
 
 var MAP_BUILDERS={
@@ -680,7 +717,7 @@ var MAP_BUILDERS={
   [30,29,28,27,26,25,24,23,22,21].forEach(function(n){h+=mkRow('stall',[n]);});
   h+='</div><div>';
   [[11,10],[12,9],[13,8],[14,7],[15,6],[16,5],[17,4],[18,3],[19,2],[20,1]].forEach(function(p){h+=mkRow('stall',p);});
-  // ── TURNOUT FIX: use 'turnout' type instead of 'stall' ──
+  // ── TURNOUT FIX: 'turnout' type maps to to_N keys, not s_N ──
   h+='</div></div></div><div style="margin-top:14px;border-top:1px solid var(--bd);padding-top:10px;"><div class="section-label" id="secBAto">Turn Out Stalls 1\u20137</div><div role="grid" aria-labelledby="secBAto">'+mkRow('turnout',[1,2,3,4,5,6,7])+'</div></div>';return h;
 },
 'barn-c':function(){
@@ -734,7 +771,7 @@ async function runBookingsCheck(start,end){
       if(type==='turnout')num=c.dataset.turnout;
       else if(type==='rv')num=c.dataset.rv;
       else num=c.dataset.stall;
-      // Build booked-map key: turnout uses stall_to_N
+      // ── TURNOUT FIX: turnout stalls use stall_to_N key in bookedMap ──
       var bookedKey=type==='rv'?'rv_'+num:(type==='turnout'?'stall_to_'+num:'stall_'+num);
       var prodKey=(type==='rv'?'r_':(type==='turnout'?'to_':'s_'))+num,prod=productMap[prodKey];
       var isClosed=prod&&closedSet.has(Number(prod.itemId));
@@ -743,177 +780,231 @@ async function runBookingsCheck(start,end){
       else{c.classList.add('available');c.setAttribute('aria-label',label+', available');}
     });
     setProgressLabel('\u2713 Availability current',true);setProgressBar(100);startStaleTimer();
-  }catch(err){if(myRun!==batchRunId)return;document.querySelectorAll('.sc.checking').forEach(function(c){c.classList.remove('checking');});setProgressLabel('Could not check availability',false);showFallback();}
+  }catch(err){
+    if(myRun!==batchRunId)return;
+    document.querySelectorAll('.sc.checking').forEach(function(c){c.classList.remove('checking');});
+    setProgressLabel('Could not check availability',false);showFallback();
+  }
 }
 function setProgressBar(pct){document.getElementById('progressBar').style.width=pct+'%';}
 function setProgressLabel(text,done){var el=document.getElementById('progressLabel');el.textContent=text;el.className='progress-label'+(done?' done':'');}
 function showFallback(){document.getElementById('fallbackBanner').classList.add('vis');}
 
 // ── CLICK HANDLING ──────────────────────────────────────────
-document.addEventListener('click',function(e){var cell=e.target.closest('.sc');if(cell){handleCellSelect(cell);}else{var panel=document.getElementById('infoPanel'),widget=document.getElementById('widgetSection');if(!panel.contains(e.target)&&!widget.contains(e.target)&&isTouch)clearSelection();}});
+document.addEventListener('click',function(e){
+  var cell=e.target.closest('.sc');
+  if(cell){handleCellSelect(cell);}
+  else{
+    var panel=document.getElementById('infoPanel'),widget=document.getElementById('widgetSection');
+    if(!panel.contains(e.target)&&!widget.contains(e.target)&&isTouch)clearSelection();
+  }
+});
 document.addEventListener('keydown',function(e){
   var cell=document.activeElement;if(!cell||!cell.classList.contains('sc'))return;
   if(e.key==='Enter'||e.key===' '){e.preventDefault();handleCellSelect(cell);return;}
   if(!['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key))return;e.preventDefault();
   var row=cell.parentElement,cells=Array.from(row.querySelectorAll('.sc')),idx=cells.indexOf(cell),target=null;
-  if(e.key==='ArrowLeft'&&idx>0)target=cells[idx-1];if(e.key==='ArrowRight'&&idx<cells.length-1)target=cells[idx+1];
-  if(e.key==='ArrowUp'||e.key==='ArrowDown'){var allRows=Array.from(document.querySelectorAll('.stall-row,.rv-row')),ri=allRows.indexOf(row),ni=e.key==='ArrowUp'?ri-1:ri+1;if(ni>=0&&ni<allRows.length){var nc=Array.from(allRows[ni].querySelectorAll('.sc'));target=nc[Math.min(idx,nc.length-1)]||null;}}
+  if(e.key==='ArrowLeft'&&idx>0)target=cells[idx-1];
+  if(e.key==='ArrowRight'&&idx<cells.length-1)target=cells[idx+1];
+  if(e.key==='ArrowUp'||e.key==='ArrowDown'){
+    var allRows=Array.from(document.querySelectorAll('.stall-row,.rv-row')),ri=allRows.indexOf(row),ni=e.key==='ArrowUp'?ri-1:ri+1;
+    if(ni>=0&&ni<allRows.length){var nc=Array.from(allRows[ni].querySelectorAll('.sc'));target=nc[Math.min(idx,nc.length-1)]||null;}
+  }
   if(target&&!target.classList.contains('no-product'))target.focus();
 });
 
 function handleCellSelect(cell){
-  if(cell.classList.contains('no-product'))return;if(cell.classList.contains('unavailable')){clearSelection();return;}
-  var d=getDates();if(!d.start||!d.end||nightsBetween(d.start,d.end)<=0){setProgressLabel('\u26a0 Select valid dates first',false);return;}
-  if(selectedCell)selectedCell.classList.remove('selected');selectedCell=cell;cell.classList.add('selected');
+  if(cell.classList.contains('no-product'))return;
+  if(cell.classList.contains('unavailable')){clearSelection();return;}
+  var d=getDates();
+  if(!d.start||!d.end||nightsBetween(d.start,d.end)<=0){setProgressLabel('\u26a0 Select valid dates first',false);return;}
+  if(selectedCell)selectedCell.classList.remove('selected');
+  selectedCell=cell;cell.classList.add('selected');
   var type=cell.dataset.type;
   var number=parseInt(type==='rv'?cell.dataset.rv:(type==='turnout'?cell.dataset.turnout:cell.dataset.stall));
   var key=(type==='rv'?'r_':(type==='turnout'?'to_':'s_'))+number;
   var prod=productMap[key];if(!prod)return;
   selectedLabel=type==='rv'?'RV Site '+number:(type==='turnout'?'Turn Out '+number:'Stall '+number);
-  // Remove compact mode when selecting a new stall
-  document.getElementById('infoPanel').classList.remove('compact');
-  showInfoPanel(selectedLabel);fetchStallDetail(prod.itemId,selectedLabel,cell,d.start,d.end);updateUrl();
-  if(isTouch)document.getElementById('infoPanel').classList.add('vis');
-}
+  updateUrl();
 
-function showInfoPanel(label){
-  document.getElementById('infoEmpty').style.display='none';document.getElementById('infoContent').classList.add('vis');
-  document.getElementById('iStallId').textContent=label;document.getElementById('iStallMeta').textContent=(currentArea?currentArea.name:'')+' \u00b7 Circle T Arena';
-  var b=document.getElementById('iAvailBanner');b.className='avail-banner loading';document.getElementById('iAvailText').textContent='Loading pricing...';
-  document.getElementById('iAvailDetails').style.display='none';document.getElementById('btnAddCart').disabled=true;
-}
-function clearInfoPanel(){
-  document.getElementById('infoEmpty').style.display='flex';document.getElementById('infoContent').classList.remove('vis');
-  document.getElementById('infoPanel').classList.remove('compact');
-  if(isTouch)document.getElementById('infoPanel').classList.remove('vis');
-  selectedCell=null;selectedLabel=null;
-}
-function clearSelection(){if(selectedCell){selectedCell.classList.remove('selected');selectedCell=null;}selectedLabel=null;clearInfoPanel();closeWidget();updateUrl();}
-
-async function fetchStallDetail(itemId,label,cell,start,end){
-  if(availCache[itemId]){renderStallDetail(availCache[itemId],itemId,label,cell,start,end);return;}
-  try{var resp=await fetch('/api/availability?item_id='+itemId+'&start='+fmtApi(start)+'&end='+fmtApi(end));if(!resp.ok)throw new Error('API '+resp.status);var result=await resp.json();availCache[itemId]=result;if(selectedCell===cell)renderStallDetail(result,itemId,label,cell,start,end);}
-  catch(err){if(selectedCell===cell){document.getElementById('iAvailBanner').className='avail-banner error';document.getElementById('iAvailText').textContent='Error: '+(err.message||'Could not load');}}
-}
-function renderStallDetail(result,itemId,label,cell,start,end){
-  if(result.error){document.getElementById('iAvailBanner').className='avail-banner error';document.getElementById('iAvailText').textContent='Could not load pricing';return;}
-  var isAvail=result.available&&result.slip,b=document.getElementById('iAvailBanner');
-  b.className='avail-banner '+(isAvail?'available':'unavailable');document.getElementById('iAvailText').textContent=isAvail?'Available for your dates':'Not available \u2014 already booked';
-  document.getElementById('iAvailDetails').style.display='block';
-  var nights=nightsBetween(start,end);document.getElementById('iCheckin').textContent=fmtDisplay(start);document.getElementById('iCheckout').textContent=fmtDisplay(end);document.getElementById('iNights').textContent=nights+(nights===1?' night':' nights');
-  if(isAvail){document.getElementById('iPrice').textContent=result.priceTitle||'\u2014';document.getElementById('iPriceUnit').textContent=result.priceUnit||'per night';document.getElementById('iPriceTotal').innerHTML=result.priceTotal?'Total: <strong>'+result.priceTotal+'</strong>':'';
-    var inCart=cart.some(function(c){return c.itemId===itemId;});var btn=document.getElementById('btnAddCart');btn.disabled=false;var isRv=selectedCell&&selectedCell.dataset.type==='rv';btn.textContent=isRv?'Book This RV Site':(selectedCell&&selectedCell.dataset.type==='turnout'?'Book This Stall':'Book This Stall');btn.onclick=function(){bookSelected();};}
-  else{document.getElementById('iPrice').textContent='\u2014';document.getElementById('iPriceUnit').textContent='';document.getElementById('iPriceTotal').innerHTML='';document.getElementById('btnAddCart').disabled=true;document.getElementById('btnAddCart').textContent='Not Available';}
-  updateCartUI();
-}
-
-// ── CART ─────────────────────────────────────────────────────
-function addToCart(){
-  if(!selectedCell||!selectedLabel)return;
-  var type=selectedCell.dataset.type;
-  var number=parseInt(type==='rv'?selectedCell.dataset.rv:(type==='turnout'?selectedCell.dataset.turnout:selectedCell.dataset.stall));
-  var key=(type==='rv'?'r_':(type==='turnout'?'to_':'s_'))+number,prod=productMap[key];if(!prod)return;
-  var cached=availCache[prod.itemId];if(!cached||!cached.slip)return;if(cart.some(function(c){return c.itemId===prod.itemId;}))return;
-  cart.push({itemId:prod.itemId,label:selectedLabel,type:type,number:number,slip:cached.slip});selectedCell.classList.add('in-cart');
-  var btn=document.getElementById('btnAddCart');btn.textContent='Remove from Cart';btn.onclick=function(){removeFromCart(prod.itemId);};updateCartUI();
-}
-function removeFromCart(itemId){
-  cart=cart.filter(function(c){return c.itemId!==itemId;});
-  document.querySelectorAll('.sc.in-cart').forEach(function(c){
-    var t=c.dataset.type;
-    var n=parseInt(t==='rv'?c.dataset.rv:(t==='turnout'?c.dataset.turnout:c.dataset.stall));
-    var k=(t==='rv'?'r_':(t==='turnout'?'to_':'s_'))+n,p=productMap[k];
-    if(p&&!cart.some(function(ci){return ci.itemId===p.itemId;}))c.classList.remove('in-cart');
-  });
-  if(selectedCell){
-    var t=selectedCell.dataset.type;
-    var n=parseInt(t==='rv'?selectedCell.dataset.rv:(t==='turnout'?selectedCell.dataset.turnout:selectedCell.dataset.stall));
-    var k=(t==='rv'?'r_':(t==='turnout'?'to_':'s_'))+n,p=productMap[k];
-    if(p&&p.itemId===itemId){var btn=document.getElementById('btnAddCart');btn.textContent='Add to Cart';btn.onclick=function(){addToCart();};}
+  if(isTouch){
+    // Mobile: skip info panel, go straight to the widget.
+    // The widget shows price, availability, and Book Now — no need to duplicate it.
+    bookSelectedDirect(prod.itemId,selectedLabel,d);
+    return;
   }
-  updateCartUI();
-}
-function updateCartUI(){
-  var block=document.getElementById('cartBlock'),items=document.getElementById('cartItems'),count=document.getElementById('cartCount');
-  if(cart.length===0){block.classList.remove('vis');return;}block.classList.add('vis');
-  items.innerHTML=cart.map(function(c){return '<div class="cart-item"><span class="ci-name">'+c.label+'</span><button class="ci-remove" onclick="removeFromCart('+c.itemId+')">✕</button></div>';}).join('');
-  var tc=0,all=true;cart.forEach(function(c){var ca=availCache[c.itemId];if(ca&&ca.priceTotal){var m=ca.priceTotal.match(/[\d,.]+/);if(m)tc+=parseFloat(m[0].replace(',',''));else all=false;}else all=false;});
-  var txt=cart.length+' spot'+(cart.length!==1?'s':'')+' selected';if(all&&tc>0)txt+=' \u00b7 Est. total: $'+tc.toFixed(2);count.textContent=txt;
+
+  // Desktop: show info panel with pricing first
+  showInfoPanel(selectedLabel);
+  fetchStallDetail(prod.itemId,selectedLabel,cell,d.start,d.end);
 }
 
-// ── SESSION BANNER ──────────────────────────────────────────
-function updateSessionBanner(){
-  var banner=document.getElementById('sessionBanner');
-  if(sessionActive){
-    banner.classList.add('vis');
-    document.getElementById('sessionBannerText').textContent=
-      sessionItemCount>0?(sessionItemCount+' item'+(sessionItemCount!==1?'s':'')+' in your cart \u2014 add more or checkout'):'Booking in progress \u2014 add more stalls or checkout';
-  }else{
-    banner.classList.remove('vis');
+// Mobile direct path — fetches slip then launches widget immediately
+function bookSelectedDirect(itemId,label,d){
+  if(availCache[itemId]&&availCache[itemId].slip){
+    _launchWidget(itemId,availCache[itemId].slip,label,d);
+    return;
   }
-}
-function sessionAddMore(){
-  closeWidget();
-  var mapPanel=document.querySelector('.map-panel');
-  if(mapPanel&&document.getElementById('mapView').classList.contains('vis')){
-    mapPanel.scrollIntoView({behavior:'smooth',block:'start'});
-  }
-}
-function sessionCheckout(){
+  // Show widget frame with loading state while fetching
+  document.getElementById('widgetTitle').textContent=label;
+  document.getElementById('widgetStallLabel').textContent='Checking availability...';
+  document.getElementById('widgetFrameHeader').textContent='Loading...';
+  document.getElementById('widgetHint').innerHTML='';
+  document.getElementById('widgetMsg').style.display='block';
+  document.getElementById('widgetMsg').textContent='Checking availability...';
+  document.getElementById('CF_WIDGET_TARGET').innerHTML='';
   document.getElementById('widgetSection').classList.add('vis');
-  document.getElementById('widgetTitle').textContent='Your Cart';
-  document.getElementById('widgetStallLabel').textContent='Review your items and complete checkout';
-  document.getElementById('widgetFrameHeader').textContent='Your booking cart';
-  document.getElementById('widgetHint').innerHTML='Use <strong>+ Add to Booking</strong> to add more items, or continue through the prompts below to enter your details and complete your reservation.';
+  if(isTouch)document.body.classList.add('widget-active');
+
+  fetch('/api/availability?item_id='+itemId+'&start='+fmtApi(d.start)+'&end='+fmtApi(d.end))
+    .then(function(r){return r.json();})
+    .then(function(result){
+      availCache[itemId]=result;
+      if(result.available&&result.slip){
+        _launchWidget(itemId,result.slip,label,d);
+      }else{
+        document.getElementById('widgetMsg').textContent='This stall is not available for your dates.';
+        if(selectedCell){selectedCell.classList.remove('selected');selectedCell.classList.add('unavailable');}
+        setTimeout(function(){closeWidget();},2000);
+      }
+    })
+    .catch(function(){
+      document.getElementById('widgetMsg').innerHTML='Could not check availability. <a href="'+FALLBACK_URL+'" target="_blank" style="color:var(--gldl);">Book directly here</a>';
+    });
+}
+
+// Core widget launch — used by mobile direct path, desktop book button, and Return to Cart
+function _launchWidget(itemId,slip,label,d){
+  lastBookedItemId=itemId;
+  lastBookedSlip=slip;
+  sessionActive=true;
+  sessionItemCount++;
+  _widgetWasLarge=false;
+  updateSessionPill();
+
+  var hint=document.getElementById('widgetHint');
+  if(sessionItemCount<=1){
+    hint.innerHTML='Click <strong>Book Now</strong> below to add this item to your cart. After confirming your dates, use <strong>+ Add to Booking</strong> to add more, or continue through the prompts to complete your reservation.';
+  }else{
+    hint.innerHTML='Your cart is active. Click <strong>Book Now</strong> to add this item, then use <strong>+ Add to Booking</strong> to keep adding, or proceed to complete your reservation.';
+  }
+  document.getElementById('widgetTitle').textContent=sessionItemCount<=1?'Complete Your Reservation':'Add to Your Reservation';
+  document.getElementById('widgetStallLabel').textContent=label;
+  document.getElementById('widgetFrameHeader').textContent='Adding '+label+' to your cart';
   document.getElementById('widgetMsg').style.display='block';
   document.getElementById('CF_WIDGET_TARGET').innerHTML='';
-  // On mobile: collapse info panel and hide chrome
-  if(isTouch){
-    document.getElementById('infoPanel').classList.add('compact');
-    document.body.classList.add('widget-active');
-  }
-  setTimeout(function(){document.getElementById('widgetSection').scrollIntoView({behavior:'smooth',block:'start'});},100);
+  document.getElementById('widgetSection').classList.add('vis');
+  if(isTouch)document.body.classList.add('widget-active');
+
   setTimeout(function(){
     try{
       document.getElementById('widgetMsg').style.display='none';
       new CHECKFRONT.Widget({
         host:'circle-t-arena.manage.na1.bookingplatform.app',
         target:'CF_WIDGET_TARGET',
+        item_id:String(itemId),
+        slip:slip,
+        date:fmtApi(d.start),
+        end_date:fmtApi(d.end),
         provider:'droplet',
         options:'hidesearch,hidedates'
       }).render();
     }catch(err){
-      document.getElementById('widgetMsg').innerHTML='Could not load checkout. <a href="'+FALLBACK_URL+'" target="_blank" style="color:var(--gldl);">Complete booking here</a>';
+      document.getElementById('widgetMsg').style.display='block';
+      document.getElementById('widgetMsg').innerHTML='Could not load reservation form. <a href="'+FALLBACK_URL+'" target="_blank" style="color:var(--gldl);">Book directly here</a>';
     }
-  },500);
+  },400);
 }
-function sessionClear(){
-  sessionActive=false;
-  sessionItemCount=0;
-  updateSessionBanner();
+
+function showInfoPanel(label){
+  document.getElementById('infoEmpty').style.display='none';
+  document.getElementById('infoContent').classList.add('vis');
+  document.getElementById('iStallId').textContent=label;
+  document.getElementById('iStallMeta').textContent=(currentArea?currentArea.name:'')+' \u00b7 Circle T Arena';
+  var b=document.getElementById('iAvailBanner');b.className='avail-banner loading';
+  document.getElementById('iAvailText').textContent='Loading pricing...';
+  document.getElementById('iAvailDetails').style.display='none';
+  document.getElementById('btnAddCart').disabled=true;
+}
+function clearInfoPanel(){
+  document.getElementById('infoEmpty').style.display='flex';
+  document.getElementById('infoContent').classList.remove('vis');
+  if(isTouch)document.getElementById('infoPanel').classList.remove('vis');
+  selectedCell=null;selectedLabel=null;
+}
+function clearSelection(){
+  if(selectedCell){selectedCell.classList.remove('selected');selectedCell=null;}
+  selectedLabel=null;clearInfoPanel();closeWidget();updateUrl();
+}
+
+async function fetchStallDetail(itemId,label,cell,start,end){
+  if(availCache[itemId]){renderStallDetail(availCache[itemId],itemId,label,cell,start,end);return;}
+  try{
+    var resp=await fetch('/api/availability?item_id='+itemId+'&start='+fmtApi(start)+'&end='+fmtApi(end));
+    if(!resp.ok)throw new Error('API '+resp.status);
+    var result=await resp.json();availCache[itemId]=result;
+    if(selectedCell===cell)renderStallDetail(result,itemId,label,cell,start,end);
+  }catch(err){
+    if(selectedCell===cell){
+      document.getElementById('iAvailBanner').className='avail-banner error';
+      document.getElementById('iAvailText').textContent='Error: '+(err.message||'Could not load');
+    }
+  }
+}
+function renderStallDetail(result,itemId,label,cell,start,end){
+  if(result.error){document.getElementById('iAvailBanner').className='avail-banner error';document.getElementById('iAvailText').textContent='Could not load pricing';return;}
+  var isAvail=result.available&&result.slip,b=document.getElementById('iAvailBanner');
+  b.className='avail-banner '+(isAvail?'available':'unavailable');
+  document.getElementById('iAvailText').textContent=isAvail?'Available for your dates':'Not available \u2014 already booked';
+  document.getElementById('iAvailDetails').style.display='block';
+  var nights=nightsBetween(start,end);
+  document.getElementById('iCheckin').textContent=fmtDisplay(start);
+  document.getElementById('iCheckout').textContent=fmtDisplay(end);
+  document.getElementById('iNights').textContent=nights+(nights===1?' night':' nights');
+  if(isAvail){
+    document.getElementById('iPrice').textContent=result.priceTitle||'\u2014';
+    document.getElementById('iPriceUnit').textContent=result.priceUnit||'per night';
+    document.getElementById('iPriceTotal').innerHTML=result.priceTotal?'Total: <strong>'+result.priceTotal+'</strong>':'';
+    var btn=document.getElementById('btnAddCart');btn.disabled=false;
+    var type=selectedCell?selectedCell.dataset.type:'stall';
+    btn.textContent=type==='rv'?'Book This RV Site':(type==='turnout'?'Book This Turn Out':'Book This Stall');
+    btn.onclick=function(){bookSelected();};
+  }else{
+    document.getElementById('iPrice').textContent='\u2014';
+    document.getElementById('iPriceUnit').textContent='';
+    document.getElementById('iPriceTotal').innerHTML='';
+    document.getElementById('btnAddCart').disabled=true;
+    document.getElementById('btnAddCart').textContent='Not Available';
+  }
+}
+
+// Desktop booking path (from info panel Book button)
+function bookSelected(){
+  if(!selectedCell||!selectedLabel)return;
+  var type=selectedCell.dataset.type;
+  var number=parseInt(type==='rv'?selectedCell.dataset.rv:(type==='turnout'?selectedCell.dataset.turnout:selectedCell.dataset.stall));
+  var key=(type==='rv'?'r_':(type==='turnout'?'to_':'s_'))+number,prod=productMap[key];if(!prod)return;
+  var cached=availCache[prod.itemId];if(!cached||!cached.slip)return;
+  _launchWidget(prod.itemId,cached.slip,selectedLabel,getDates());
 }
 
 // ── POSTMESSAGE LISTENER ────────────────────────────────────
-// The Checkfront widget sends postMessage with its rendered height as a number.
-// When the widget goes from a large checkout view (>1500px) down to a small
-// confirmation/category view (<500px), it means the customer clicked
-// "+ Add to Booking". We use this transition to auto-collapse the widget
-// and return the user to the stall grid so they can pick their next stall.
-// The session banner stays active so they can return to checkout when ready.
-var _widgetWasLarge=false;
+// The widget sends its rendered height as a number via postMessage.
+// When it transitions from a large checkout view (>1500px) down to a small
+// view (<500px), the customer clicked "+ Add to Booking".
+// We auto-close the widget and return them to the stall map.
+// The booking session cookie on the platform domain keeps the cart intact.
 window.addEventListener('message',function(e){
   if(!e.origin||!e.origin.includes('bookingplatform'))return;
   if(typeof e.data!=='number')return;
-
   var height=e.data;
   var widgetVisible=document.getElementById('widgetSection').classList.contains('vis');
   if(!widgetVisible)return;
-
   if(height>1500)_widgetWasLarge=true;
-
   if(_widgetWasLarge&&height<500&&height>100){
     _widgetWasLarge=false;
-    updateSessionBanner();
+    // Session is still alive via cookie — just close the widget UI
+    updateSessionPill();
     setTimeout(function(){
       closeWidget();
       var mapPanel=document.querySelector('.map-panel');
@@ -924,48 +1015,12 @@ window.addEventListener('message',function(e){
   }
 });
 
-// ── BOOKING ─────────────────────────────────────────────────
-function bookSelected(){
-  if(!selectedCell||!selectedLabel)return;
-  var type=selectedCell.dataset.type;
-  var number=parseInt(type==='rv'?selectedCell.dataset.rv:(type==='turnout'?selectedCell.dataset.turnout:selectedCell.dataset.stall));
-  var key=(type==='rv'?'r_':(type==='turnout'?'to_':'s_'))+number,prod=productMap[key];if(!prod)return;
-  var cached=availCache[prod.itemId];if(!cached||!cached.slip)return;
-  cart=[{itemId:prod.itemId,label:selectedLabel,type:type,number:number,slip:cached.slip}];
-  launchBooking();
-}
-function launchBooking(){
-  if(cart.length===0)return;var first=cart[0],cl=cart.map(function(c){return c.label;}).join(', ');
-  sessionActive=true;
-  sessionItemCount++;
-  updateSessionBanner();
-  _widgetWasLarge=false;
-  // On mobile: collapse info panel to compact bar, hide header chrome
-  if(isTouch){
-    document.getElementById('infoPanel').classList.add('compact');
-    document.body.classList.add('widget-active');
-  }
-  var hint=document.getElementById('widgetHint');
-  if(sessionItemCount<=1){
-    hint.innerHTML='Click <strong>Book Now</strong> below to add this item to your cart. After confirming your dates, use <strong>+ Add to Booking</strong> to keep adding, or continue through the prompts to enter your details and complete your reservation.';
-  }else{
-    hint.innerHTML='You have items in your cart. Click <strong>Book Now</strong> below to add this one too. Use <strong>+ Add to Booking</strong> to keep adding, or continue through the prompts to complete your reservation when ready.';
-  }
-  document.getElementById('widgetTitle').textContent=sessionItemCount<=1?'Complete Your Reservation':'Add to Your Reservation';
-  document.getElementById('widgetSection').classList.add('vis');document.getElementById('widgetStallLabel').textContent=cl;
-  document.getElementById('widgetFrameHeader').textContent='Adding '+cl+' to your cart';document.getElementById('widgetMsg').style.display='block';document.getElementById('CF_WIDGET_TARGET').innerHTML='';
-  setTimeout(function(){document.getElementById('widgetSection').scrollIntoView({behavior:'smooth',block:'start'});},100);
-  setTimeout(function(){try{document.getElementById('widgetMsg').style.display='none';
-    new CHECKFRONT.Widget({host:'circle-t-arena.manage.na1.bookingplatform.app',target:'CF_WIDGET_TARGET',item_id:String(first.itemId),slip:first.slip,date:fmtApi(document.getElementById('startDate').value),end_date:fmtApi(document.getElementById('endDate').value),provider:'droplet',options:'hidesearch,hidedates'}).render();
-    if(cart.length>1){document.getElementById('widgetMsg').style.display='block';document.getElementById('widgetMsg').innerHTML='<div style="margin-bottom:10px;color:var(--gldl);font-size:11px;">Booking '+first.label+' first. After completing, book remaining: '+cart.slice(1).map(function(c){return c.label;}).join(', ')+'.</div>';}
-  }catch(err){document.getElementById('widgetMsg').style.display='block';document.getElementById('widgetMsg').innerHTML='Could not load reservation form. <a href="'+FALLBACK_URL+'" target="_blank" style="color:var(--gldl);">Book directly here</a>';}},500);
-}
 function closeWidget(){
   document.getElementById('widgetSection').classList.remove('vis');
   document.getElementById('CF_WIDGET_TARGET').innerHTML='';
-  // Restore mobile chrome
   document.body.classList.remove('widget-active');
-  document.getElementById('infoPanel').classList.remove('compact');
+  // Keep session pill visible — booking is held by the platform cookie
+  updateSessionPill();
 }
 
 // ── INIT ────────────────────────────────────────────────────
