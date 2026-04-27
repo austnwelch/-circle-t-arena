@@ -83,10 +83,6 @@ body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--tx); 
 .progress-bar { height:100%; background:var(--gld); width:0%; transition:width 0.4s ease; }
 
 /* ── Session pill ────────────────────────────────────────── */
-/* Slim sticky bar shown once a booking is in progress.
-   "Return to Cart" re-renders the widget with the last item+slip,
-   which causes the booking platform to show its own "booking in progress"
-   message so the customer can proceed or add more. */
 .session-pill { display:none; position:sticky; top:0; z-index:99; background:var(--grnd); border-bottom:2px solid var(--grn); padding:8px 20px; align-items:center; justify-content:space-between; gap:10px; }
 .session-pill.vis { display:flex; }
 .session-pill-text { display:flex; align-items:center; gap:8px; font-size:13px; font-weight:600; color:var(--grnl); white-space:nowrap; }
@@ -347,9 +343,6 @@ body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--tx); 
 </div>
 
 <!-- ── SESSION PILL ───────────────────────────────────────── -->
-<!-- Shown once a booking is in progress. "Return to Cart" re-renders
-     the widget with the last item+slip so the booking platform shows
-     its own "booking in progress" message and lets the customer proceed. -->
 <div class="session-pill" id="sessionPill">
   <div class="session-pill-text">
     <div class="session-pill-dot"></div>
@@ -431,7 +424,7 @@ body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--tx); 
 <div class="widget-section" id="widgetSection">
   <div class="widget-header">
     <div><h3 id="widgetTitle">Complete Your Reservation</h3><div class="widget-stall" id="widgetStallLabel"></div></div>
-    <button class="btn-widget-back" onclick="closeWidget()">✕ Back to map</button>
+    <button class="btn-widget-back" onclick="closeWidget()">&#8249; Back to map</button>
   </div>
   <div class="widget-frame">
     <div class="widget-frame-header" id="widgetFrameHeader">Completing reservation...</div>
@@ -489,15 +482,16 @@ var AREAS=[
 
 var productMap={},bookedMap={},closedSet=new Set(),availCache={},selectedCell=null,selectedLabel=null,currentArea=null,batchRunId=0,mapReady=false,pendingBatch=false,isTouch=('ontouchstart' in window)||navigator.maxTouchPoints>0,lastFetchedAt=null,staleTimer=null,hubAvailData={};
 
-// Session tracking.
-// lastBookedItemId + lastBookedSlip allow "Return to Cart" to re-render
-// the widget with the last item, which causes the booking platform to detect
-// its own session cookie and show "You have a booking in progress."
 var sessionActive=false;
 var sessionItemCount=0;
 var lastBookedItemId=null;
 var lastBookedSlip=null;
 var _widgetWasLarge=false;
+// ── FIX 1: track any large height seen, not just >1500 ──────
+// On mobile the widget is constrained to the viewport so the iframe
+// never reports heights >1500. We track the peak height and detect
+// the "+ Add to Booking" transition as a drop of >400px from peak.
+var _widgetPeakHeight=0;
 
 function today(){var d=new Date();d.setHours(0,0,0,0);return d;}
 function fmtInput(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
@@ -518,7 +512,6 @@ function onDateChange(){
   updateNightsPill();bookedMap={};closedSet=new Set();availCache={};batchRunId++;hubAvailData={};
   document.querySelectorAll('.sc').forEach(function(c){c.classList.remove('available','unavailable','checking','selected','in-cart');});
   clearInfoPanel();closeWidget();updateUrl();clearStaleTimer();
-  // Reset session on date change — new dates mean a fresh booking
   sessionActive=false;sessionItemCount=0;lastBookedItemId=null;lastBookedSlip=null;updateSessionPill();
   var s=document.getElementById('startDate').value,e=document.getElementById('endDate').value;
   if(!s||!e||nightsBetween(s,e)<=0){setProgressLabel('Select dates to check availability',false);setProgressBar(0);renderHubCards();return;}
@@ -541,20 +534,27 @@ function refreshAvailability(){var d=getDates();if(d.start&&d.end&&nightsBetween
 function updateSessionPill(){
   document.getElementById('sessionPill').classList.toggle('vis',sessionActive);
 }
-// Re-renders the widget with the last item+slip.
-// The booking platform detects its session cookie and shows
-// "You have a booking in progress" so the customer can proceed.
+// ── FIX 2: returnToBooking scrolls to widget on desktop ─────
 function returnToBooking(){
   if(!lastBookedItemId||!lastBookedSlip){showFallback();return;}
   var d=getDates();
   document.getElementById('widgetTitle').textContent='Your Reservation';
   document.getElementById('widgetStallLabel').textContent='Returning to your cart...';
   document.getElementById('widgetFrameHeader').textContent='Your booking in progress';
-  document.getElementById('widgetHint').innerHTML='Your cart is saved. Use <strong>+ Add to Booking</strong> to add more stalls, or continue through the prompts to complete your reservation.';
+  // ── FIX 3: clearer hint so customer understands the cart-held state ──
+  document.getElementById('widgetHint').innerHTML='Your cart is saved. If you see a <strong>booking in progress</strong> notice below, your previous stall is held — click <strong>Book Now</strong> to add this stall too, or proceed to complete your reservation.';
   document.getElementById('widgetMsg').style.display='block';
   document.getElementById('CF_WIDGET_TARGET').innerHTML='';
   document.getElementById('widgetSection').classList.add('vis');
-  if(isTouch)document.body.classList.add('widget-active');
+  if(isTouch){
+    document.body.classList.add('widget-active');
+  }else{
+    // Desktop: scroll to widget since it renders at bottom of page
+    setTimeout(function(){
+      document.getElementById('widgetSection').scrollIntoView({behavior:'smooth',block:'start'});
+    },50);
+  }
+  _widgetPeakHeight=0;
   setTimeout(function(){
     try{
       document.getElementById('widgetMsg').style.display='none';
@@ -828,24 +828,19 @@ function handleCellSelect(cell){
   updateUrl();
 
   if(isTouch){
-    // Mobile: skip info panel, go straight to the widget.
-    // The widget shows price, availability, and Book Now — no need to duplicate it.
     bookSelectedDirect(prod.itemId,selectedLabel,d);
     return;
   }
 
-  // Desktop: show info panel with pricing first
   showInfoPanel(selectedLabel);
   fetchStallDetail(prod.itemId,selectedLabel,cell,d.start,d.end);
 }
 
-// Mobile direct path — fetches slip then launches widget immediately
 function bookSelectedDirect(itemId,label,d){
   if(availCache[itemId]&&availCache[itemId].slip){
     _launchWidget(itemId,availCache[itemId].slip,label,d);
     return;
   }
-  // Show widget frame with loading state while fetching
   document.getElementById('widgetTitle').textContent=label;
   document.getElementById('widgetStallLabel').textContent='Checking availability...';
   document.getElementById('widgetFrameHeader').textContent='Loading...';
@@ -873,20 +868,21 @@ function bookSelectedDirect(itemId,label,d){
     });
 }
 
-// Core widget launch — used by mobile direct path, desktop book button, and Return to Cart
 function _launchWidget(itemId,slip,label,d){
   lastBookedItemId=itemId;
   lastBookedSlip=slip;
   sessionActive=true;
   sessionItemCount++;
+  // ── FIX 1: reset peak height tracker on each new widget launch ──
   _widgetWasLarge=false;
+  _widgetPeakHeight=0;
   updateSessionPill();
 
   var hint=document.getElementById('widgetHint');
   if(sessionItemCount<=1){
     hint.innerHTML='Click <strong>Book Now</strong> below to add this item to your cart. After confirming your dates, use <strong>+ Add to Booking</strong> to add more, or continue through the prompts to complete your reservation.';
   }else{
-    hint.innerHTML='Your cart is active. Click <strong>Book Now</strong> to add this item, then use <strong>+ Add to Booking</strong> to keep adding, or proceed to complete your reservation.';
+    hint.innerHTML='Your cart is active. Click <strong>Book Now</strong> to add this item. If you see a <strong>booking in progress</strong> notice, your previous items are saved — continue from there.';
   }
   document.getElementById('widgetTitle').textContent=sessionItemCount<=1?'Complete Your Reservation':'Add to Your Reservation';
   document.getElementById('widgetStallLabel').textContent=label;
@@ -978,7 +974,6 @@ function renderStallDetail(result,itemId,label,cell,start,end){
   }
 }
 
-// Desktop booking path (from info panel Book button)
 function bookSelected(){
   if(!selectedCell||!selectedLabel)return;
   var type=selectedCell.dataset.type;
@@ -990,20 +985,29 @@ function bookSelected(){
 
 // ── POSTMESSAGE LISTENER ────────────────────────────────────
 // The widget sends its rendered height as a number via postMessage.
-// When it transitions from a large checkout view (>1500px) down to a small
-// view (<500px), the customer clicked "+ Add to Booking".
-// We auto-close the widget and return them to the stall map.
-// The booking session cookie on the platform domain keeps the cart intact.
+// On desktop the widget expands freely so heights exceed 1500px at checkout.
+// On mobile the widget is fixed-height so it never exceeds the viewport —
+// instead we track the peak height seen and detect a drop of >400px as the
+// "+ Add to Booking" click transition.
 window.addEventListener('message',function(e){
   if(!e.origin||!e.origin.includes('bookingplatform'))return;
   if(typeof e.data!=='number')return;
   var height=e.data;
   var widgetVisible=document.getElementById('widgetSection').classList.contains('vis');
   if(!widgetVisible)return;
+
+  // ── FIX 1: dual detection — legacy large threshold + peak-drop for mobile ──
   if(height>1500)_widgetWasLarge=true;
-  if(_widgetWasLarge&&height<500&&height>100){
+  if(height>_widgetPeakHeight)_widgetPeakHeight=height;
+
+  // Legacy desktop detection (height went >1500 then dropped below 500)
+  var legacyTrigger=_widgetWasLarge&&height<500&&height>100;
+  // Mobile detection: peak was substantial and height dropped by >400px
+  var mobileTrigger=(!_widgetWasLarge)&&_widgetPeakHeight>400&&height<(_widgetPeakHeight-400)&&height>50;
+
+  if(legacyTrigger||mobileTrigger){
     _widgetWasLarge=false;
-    // Session is still alive via cookie — just close the widget UI
+    _widgetPeakHeight=0;
     updateSessionPill();
     setTimeout(function(){
       closeWidget();
@@ -1019,7 +1023,6 @@ function closeWidget(){
   document.getElementById('widgetSection').classList.remove('vis');
   document.getElementById('CF_WIDGET_TARGET').innerHTML='';
   document.body.classList.remove('widget-active');
-  // Keep session pill visible — booking is held by the platform cookie
   updateSessionPill();
 }
 
