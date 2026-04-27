@@ -219,7 +219,9 @@ body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--tx); 
 
 /* ── Mobile: info panel as compact bottom sheet ────────────── */
 @media(max-width:900px){
-  .info-panel { position:fixed; bottom:0; left:0; right:0; height:auto; max-height:50vh; border-top:2px solid var(--gld); transform:translateY(100%); transition:transform 0.25s ease-out; z-index:200; border-right:none; display:none; overflow-y:auto; }
+  /* FIX 1: restore max-height cap (was none) and proper overflow (was visible)
+     so the sheet is constrained and never shows a dark void while loading */
+  .info-panel { position:fixed; bottom:0; left:0; right:0; height:auto; max-height:65vh; border-top:2px solid var(--gld); transform:translateY(100%); transition:transform 0.25s ease-out; z-index:200; border-right:none; display:none; overflow-y:auto; -webkit-overflow-scrolling:touch; box-shadow:0 -10px 30px rgba(0,0,0,0.45); }
   .info-panel.vis { display:flex; transform:translateY(0); }
   /* Compact mode: when widget is open, shrink info panel to a thin bar */
   .info-panel.compact { max-height:none; height:auto; overflow:hidden; }
@@ -234,13 +236,28 @@ body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--tx); 
   .info-panel.compact .info-header { padding:10px 18px 6px; }
   .info-panel.compact .stall-id { font-size:16px; }
   .info-panel.compact .stall-meta { display:none; }
-  .map-panel { border-right:none; padding-bottom:20px; }
+  .map-panel { border-right:none; /* FIX 3: increased from 180px so grid rows aren't hidden behind sheet */ padding-bottom:240px; }
   .main { grid-template-columns:1fr; }
   .hub-grid { grid-template-columns:1fr; }
   /* Hide header on mobile when widget is visible to maximize space */
   body.widget-active .hdr { display:none; }
   body.widget-active .datebar { display:none; }
   body.widget-active .progress-wrap { display:none; }
+  /* FIX 2: hide redundant elements inside the sheet to reclaim vertical space
+     so the Book button is never pushed below the visible area */
+  .info-panel .price-label { display:none; }
+  .info-panel .price-unit { display:none; }
+  .info-panel .btn-clear { display:none; }
+  .info-panel .stall-meta { display:none; }
+  .info-panel .details-block { display:none; }
+  .info-panel .avail-banner { padding:8px 16px; font-size:12px; }
+  .info-panel .info-header { padding:10px 16px 8px; }
+  .info-panel .stall-id { font-size:20px; }
+  .info-panel .price-block { padding:10px 16px; }
+  .info-panel .price-amount { font-size:22px; }
+  .info-panel .book-block { padding:10px 16px; padding-bottom:max(14px, env(safe-area-inset-bottom)); }
+  .info-panel .btn-book { min-height:48px; }
+  .info-panel .cart-block { padding:10px 16px; padding-bottom:max(14px, env(safe-area-inset-bottom)); }
 }
 .err { padding:12px 16px; background:#2a1010; border:1px solid var(--red); border-radius:var(--radius); color:#c06060; font-size:13px; margin:16px 0; }
 
@@ -877,6 +894,12 @@ function sessionClear(){
 }
 
 // ── POSTMESSAGE LISTENER ────────────────────────────────────
+// The Checkfront widget sends postMessage with its rendered height as a number.
+// When the widget goes from a large checkout view (>1500px) down to a small
+// confirmation/category view (<500px), it means the customer clicked
+// "+ Add to Booking". We use this transition to auto-collapse the widget
+// and return the user to the stall grid so they can pick their next stall.
+// The session banner stays active so they can return to checkout when ready.
 var _widgetWasLarge=false;
 window.addEventListener('message',function(e){
   if(!e.origin||!e.origin.includes('bookingplatform'))return;
