@@ -922,7 +922,7 @@ function showWidgetSection(){
     var panel=document.getElementById('infoPanel');
     if(panel)panel.classList.remove('vis','compact');
     var backBtn=section.querySelector('.btn-widget-back');
-    if(backBtn)backBtn.textContent='Exit checkout';
+    if(backBtn)backBtn.textContent='Minimize';
   }else{
     var backBtnDesktop=section.querySelector('.btn-widget-back');
     if(backBtnDesktop)backBtnDesktop.textContent='✕ Close';
@@ -992,31 +992,15 @@ function sessionClear(){
   destroyWidgetSession();
 }
 
-// ── POSTMESSAGE LISTENER (detect widget state changes) ──────
+// ── POSTMESSAGE LISTENER (Checkfront iframe resize only) ─────
 var _widgetWasLarge=false;
 window.addEventListener('message',function(e){
+  // Intentionally do not intercept Checkfront's internal flow.
+  // On mobile, after the first app-selected spot is loaded, checkout owns the rest
+  // of the booking flow, including + Add to Booking and returning to /reserve/.
   if(!e.origin||!e.origin.includes('bookingplatform'))return;
   if(typeof e.data!=='number')return;
-
-  var height=e.data;
-  var widgetVisible=document.getElementById('widgetSection').classList.contains('vis');
-  if(!widgetVisible)return;
-
-  if(height>1500)_widgetWasLarge=true;
-
-  // Detect "Add to Booking" transition: was large, now small.
-  // Preserve the iframe instead of destroying it, because the Checkfront cart is session-backed.
-  if(_widgetWasLarge&&height<500&&height>100){
-    _widgetWasLarge=false;
-    updateSessionBanner();
-    setTimeout(function(){
-      hideWidgetPreserveSession();
-      var mapPanel=document.querySelector('.map-panel');
-      if(mapPanel&&document.getElementById('mapView').classList.contains('vis')){
-        mapPanel.scrollIntoView({behavior:'smooth',block:'start'});
-      }
-    },600);
-  }
+  if(e.data>1500)_widgetWasLarge=true;
 });
 
 // ── BOOKING ─────────────────────────────────────────────────
@@ -1050,7 +1034,7 @@ function launchBooking(){
   _widgetWasLarge=false;
   var hint=document.getElementById('widgetHint');
   if(isMobileCheckoutMode()){
-    hint.innerHTML='Your selected spot has been loaded below. Tap <strong>Book Now</strong> in checkout to add it to your booking. To reserve additional stalls or RV sites, use <strong>+ Add to Booking</strong> inside checkout before entering payment details.';
+    hint.innerHTML='Your selected spot has been loaded below. Tap <strong>Book Now</strong> to add it to your booking. To reserve additional stalls or RV sites, use <strong>+ Add to Booking</strong> before entering payment details.';
   }else if(sessionItemCount<=1){
     hint.innerHTML='Click <strong>Book Now</strong> below to add this item to your cart. After confirming your dates, use <strong>+ Add to Booking</strong> to keep adding, or continue through the prompts to enter your details and complete your reservation.';
   }else{
