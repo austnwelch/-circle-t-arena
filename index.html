@@ -1049,7 +1049,7 @@ function launchBooking(){
   setTimeout(function(){try{document.getElementById('widgetMsg').style.display='none';
     // First render starts clean. Later renders keep old iframes mounted as hidden session anchors.
     var targetId=prepareWidgetTarget(alreadyHadIframe);
-    new CHECKFRONT.Widget({host:'circle-t-arena.manage.na1.bookingplatform.app',target:targetId,item_id:String(first.itemId),slip:first.slip,date:fmtApi(document.getElementById('startDate').value),end_date:fmtApi(document.getElementById('endDate').value),provider:'droplet',options:'hidesearch,hidedates'}).render();
+    new CHECKFRONT.Widget({host:'circle-t-arena.manage.na1.bookingplatform.app',target:targetId,item_id:String(first.itemId),slip:first.slip,date:fmtApi(document.getElementById('startDate').value),end_date:fmtApi(document.getElementById('endDate').value),provider:'droplet',options:(isMobileCheckoutMode()?'hidedates':'hidesearch,hidedates')}).render();
     if(cart.length>1){document.getElementById('widgetMsg').style.display='block';document.getElementById('widgetMsg').innerHTML='<div style="margin-bottom:10px;color:var(--gldl);font-size:11px;">Booking '+first.label+' first. After completing, book remaining: '+cart.slice(1).map(function(c){return c.label;}).join(', ')+'.</div>';}
   }catch(err){document.getElementById('widgetMsg').style.display='block';document.getElementById('widgetMsg').innerHTML='Could not load reservation form. <a href="'+FALLBACK_URL+'" target="_blank" style="color:var(--gldl);">Book directly here</a>';}},500);
 }
