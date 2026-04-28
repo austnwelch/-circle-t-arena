@@ -198,6 +198,7 @@ body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--tx); 
 .widget-stall { font-size:12px; color:var(--gldl); font-family:'JetBrains Mono',monospace; margin-top:3px; }
 .btn-widget-back { background:transparent; border:1px solid var(--bd); color:var(--txd); padding:7px 14px; border-radius:var(--radius); font-size:12px; font-family:'DM Sans',sans-serif; cursor:pointer; transition:border-color 0.15s,color 0.15s; }
 .btn-widget-back:hover { border-color:var(--bdl); color:var(--tx); }
+.widget-toolbar-actions { display:flex; gap:8px; align-items:center; }
 .widget-frame { background:#f5f3ef; border:1px solid var(--bd); border-radius:var(--radius); overflow:hidden; }
 .widget-frame-header { background:#e8e4dc; padding:11px 16px; font-size:12px; color:#4a4030; font-family:'JetBrains Mono',monospace; border-bottom:1px solid #d0c8b8; }
 .widget-wrap { min-height:100px; padding:16px; background:#fff; }
@@ -291,7 +292,10 @@ body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--tx); 
   body.widget-active { overflow:hidden; }
   body.widget-active .info-panel { display:none !important; transform:translateY(100%) !important; }
   body.widget-active .widget-section.vis { display:block !important; position:fixed !important; inset:0 !important; z-index:12000 !important; overflow:auto !important; -webkit-overflow-scrolling:touch; padding:0 !important; border-top:none !important; background:var(--sf2) !important; }
-  body.widget-active .widget-header { position:sticky; top:0; z-index:2; padding:12px 14px; margin-bottom:0; background:var(--sf2); border-bottom:1px solid var(--bd); }
+  body.widget-active .widget-header { position:sticky; top:0; z-index:2; padding:12px 14px; margin-bottom:0; background:var(--sf2); border-bottom:1px solid var(--bd); gap:10px; }
+  body.widget-active .widget-header > div:first-child { min-width:0; }
+  body.widget-active .widget-toolbar-actions { display:flex; gap:8px; flex-shrink:0; }
+  body.widget-active .widget-toolbar-actions .btn-widget-back { padding:8px 10px; font-size:12px; white-space:nowrap; }
   body.widget-active .widget-frame { border:none; border-radius:0; min-height:calc(100vh - 56px); }
   body.widget-active .widget-frame-header { padding:9px 14px; }
   body.widget-active .widget-hint { padding:10px 14px; font-size:13px; }
@@ -429,7 +433,10 @@ body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--tx); 
 <div class="widget-section" id="widgetSection">
   <div class="widget-header">
     <div><h3 id="widgetTitle">Complete Your Reservation</h3><div class="widget-stall" id="widgetStallLabel"></div></div>
-    <button class="btn-widget-back" onclick="closeWidget()">✕ Close</button>
+    <div class="widget-toolbar-actions">
+      <button class="btn-widget-back" onclick="addMoreFromMap()">← Add More From Map</button>
+      <button class="btn-widget-back" onclick="closeWidget()">Minimize</button>
+    </div>
   </div>
   <div class="widget-frame">
     <div class="widget-frame-header" id="widgetFrameHeader">Completing reservation...</div>
@@ -867,9 +874,8 @@ function destroyWidgetSession(){
   setWidgetActive(false);
   _widgetWasLarge=false;
 }
-function buildAppendUrl(item){
+function buildAppendUrl(){
   var start=document.getElementById('startDate').value;
-  var end=document.getElementById('endDate').value;
   var params=new URLSearchParams();
   params.set('inline','1');
   params.set('options','hidesearch,hidedates');
@@ -877,26 +883,28 @@ function buildAppendUrl(item){
   params.set('ssl','1');
   params.set('src',window.location.origin);
   params.set('date',fmtApi(start));
-  params.set('start_date',start);
-  params.set('end_date',end);
   params.set('append','1');
-  if(item&&item.itemId)params.set('item_id',String(item.itemId));
-  if(item&&item.slip)params.set('slip',item.slip);
   return 'https://circle-t-arena.manage.na1.bookingplatform.app/reserve/?'+params.toString();
 }
-function navigateExistingIframeForAppend(item){
+function navigateExistingIframeForAppend(){
   var iframe=getCheckfrontIframe();
   if(!iframe)return false;
-  iframe.src=buildAppendUrl(item);
+  // Do not pass item_id/slip here. In mobile testing, forcing those params caused
+  // Checkfront's embedded append view to land on a "No Results Found" state.
+  // This test only asks whether the existing iframe/cart session survives while
+  // Checkfront's own append flow is opened in the same frame.
+  iframe.src=buildAppendUrl();
   return true;
 }
-function sessionAddMore(){
+function addMoreFromMap(){
   hideWidgetPreserveSession();
+  clearSelection();
   var mapPanel=document.querySelector('.map-panel');
   if(mapPanel&&document.getElementById('mapView').classList.contains('vis')){
     mapPanel.scrollIntoView({behavior:'smooth',block:'start'});
   }
 }
+function sessionAddMore(){addMoreFromMap();}
 function sessionCheckout(){
   document.getElementById('widgetTitle').textContent='Your Cart';
   document.getElementById('widgetStallLabel').textContent='Review your items and complete checkout';
@@ -975,17 +983,17 @@ function launchBooking(){
   if(sessionItemCount<=1){
     hint.innerHTML='Click <strong>Book Now</strong> below to add this item to your cart. After confirming your dates, use <strong>+ Add to Booking</strong> to keep adding, or continue through the prompts to enter your details and complete your reservation.';
   }else{
-    hint.innerHTML='You have items in your cart. This test keeps the existing Checkfront session alive and navigates that same frame into append mode. If the selected stall is not preloaded, use Checkfront\'s product picker inside the frame to add it.';
+    hint.innerHTML='You have items in your cart. This test keeps the existing Checkfront session alive and opens Checkfront\'s own <strong>append</strong> flow in the same frame. The app-selected stall may not preload here; the goal is to confirm the existing cart survives on mobile.';
   }
   document.getElementById('widgetTitle').textContent=sessionItemCount<=1?'Complete Your Reservation':'Add to Your Reservation';
   document.getElementById('widgetStallLabel').textContent=cl;
-  document.getElementById('widgetFrameHeader').textContent=sessionItemCount<=1?'Adding '+cl+' to your cart':'Continuing your existing cart';
+  document.getElementById('widgetFrameHeader').textContent=sessionItemCount<=1?'Adding '+cl+' to your cart':'Opening existing cart append flow';
   document.getElementById('widgetMsg').style.display='block';
   showWidgetSection();
 
   if(existingIframe){
     document.getElementById('widgetMsg').style.display='none';
-    navigateExistingIframeForAppend(first);
+    navigateExistingIframeForAppend();
     return;
   }
 
