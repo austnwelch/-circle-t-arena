@@ -193,6 +193,9 @@ body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--tx); 
 
 .widget-section { display:none; padding:20px; border-top:2px solid var(--gld); background:var(--sf2); }
 .widget-section.vis { display:block; }
+.widget-section.widget-preserved { display:block !important; position:fixed !important; left:0 !important; right:0 !important; bottom:0 !important; height:1px !important; min-height:1px !important; overflow:hidden !important; opacity:0 !important; pointer-events:none !important; z-index:-1 !important; padding:0 !important; border-top:0 !important; }
+.cf-render-preserved { display:block !important; position:fixed !important; left:0 !important; right:0 !important; bottom:0 !important; width:100% !important; height:1px !important; min-height:1px !important; overflow:hidden !important; opacity:0 !important; pointer-events:none !important; z-index:-1 !important; }
+.cf-render-active { display:block !important; position:static !important; opacity:1 !important; pointer-events:auto !important; }
 .widget-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
 .widget-header h3 { font-family:'Playfair Display',serif; font-size:18px; font-weight:700; }
 .widget-stall { font-size:12px; color:var(--gldl); font-family:'JetBrains Mono',monospace; margin-top:3px; }
@@ -470,6 +473,7 @@ var sessionActive=false;         // true after first item added via widget
 var widgetHeightHistory=[];      // track recent heights for transition detection
 var lastWidgetHeight=0;
 var sessionItemCount=0;          // track items added this session
+var widgetRenderSeq=0;          // each widget render gets its own target so old iframes can stay alive
 
 function today(){var d=new Date();d.setHours(0,0,0,0);return d;}
 function fmtInput(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
@@ -489,7 +493,7 @@ function initDates(){
 function onDateChange(){
   updateNightsPill();bookedMap={};closedSet=new Set();availCache={};cart=[];updateCartUI();batchRunId++;hubAvailData={};
   document.querySelectorAll('.sc').forEach(function(c){c.classList.remove('available','unavailable','checking','selected','in-cart');});
-  clearInfoPanel();closeWidget();updateUrl();clearStaleTimer();
+  clearInfoPanel();destroyWidgetSession();updateUrl();clearStaleTimer();
   // Reset session on date change
   sessionActive=false;sessionItemCount=0;updateSessionBanner();
   var s=document.getElementById('startDate').value,e=document.getElementById('endDate').value;
@@ -810,8 +814,56 @@ function updateSessionBanner(){
     banner.classList.remove('vis');
   }
 }
+function hasExistingCheckfrontIframe(){
+  var target=document.getElementById('CF_WIDGET_TARGET');
+  return !!(target&&target.querySelector('iframe'));
+}
+function prepareWidgetTarget(preserveExisting){
+  var container=document.getElementById('CF_WIDGET_TARGET');
+  if(!preserveExisting){
+    container.innerHTML='';
+    container.removeAttribute('data-active-target');
+  }
+  Array.prototype.forEach.call(container.children,function(child){
+    child.classList.remove('cf-render-active');
+    child.classList.add('cf-render-preserved');
+  });
+  widgetRenderSeq++;
+  var id='CF_WIDGET_RENDER_'+widgetRenderSeq;
+  var div=document.createElement('div');
+  div.id=id;
+  div.className='cf-render-active';
+  container.appendChild(div);
+  container.setAttribute('data-active-target',id);
+  return id;
+}
+function showWidgetSection(){
+  var section=document.getElementById('widgetSection');
+  section.classList.remove('widget-preserved');
+  section.classList.add('vis');
+  if(isTouch)document.body.classList.add('widget-active');
+  setTimeout(function(){section.scrollIntoView({behavior:'smooth',block:'start'});},100);
+}
+function hideWidgetPreserveSession(){
+  var section=document.getElementById('widgetSection');
+  section.classList.remove('vis');
+  section.classList.add('widget-preserved');
+  document.body.classList.remove('widget-active');
+  var panel=document.getElementById('infoPanel');
+  if(panel)panel.classList.remove('compact');
+}
+function destroyWidgetSession(){
+  var section=document.getElementById('widgetSection');
+  section.classList.remove('vis','widget-preserved');
+  var target=document.getElementById('CF_WIDGET_TARGET');
+  if(target){target.innerHTML='';target.removeAttribute('data-active-target');}
+  document.body.classList.remove('widget-active');
+  var panel=document.getElementById('infoPanel');
+  if(panel)panel.classList.remove('compact');
+  _widgetWasLarge=false;
+}
 function sessionAddMore(){
-  closeWidget();
+  hideWidgetPreserveSession();
   // If we're on the hub, stay there so user can pick an area
   // If we're in a map view, scroll to the grid
   var mapPanel=document.querySelector('.map-panel');
@@ -820,20 +872,26 @@ function sessionAddMore(){
   }
 }
 function sessionCheckout(){
-  document.getElementById('widgetSection').classList.add('vis');
   document.getElementById('widgetTitle').textContent='Your Cart';
   document.getElementById('widgetStallLabel').textContent='Review your items and complete checkout';
   document.getElementById('widgetFrameHeader').textContent='Your booking cart';
   document.getElementById('widgetHint').innerHTML='Use <strong>+ Add to Booking</strong> to add more items, or continue through the prompts below to enter your details and complete your reservation.';
+
+  // If we already have a live Checkfront iframe, bring it back instead of starting over.
+  if(hasExistingCheckfrontIframe()){
+    showWidgetSection();
+    return;
+  }
+
   document.getElementById('widgetMsg').style.display='block';
-  document.getElementById('CF_WIDGET_TARGET').innerHTML='';
-  setTimeout(function(){document.getElementById('widgetSection').scrollIntoView({behavior:'smooth',block:'start'});},100);
+  showWidgetSection();
   setTimeout(function(){
     try{
       document.getElementById('widgetMsg').style.display='none';
+      var targetId=prepareWidgetTarget(false);
       new CHECKFRONT.Widget({
         host:'circle-t-arena.manage.na1.bookingplatform.app',
-        target:'CF_WIDGET_TARGET',
+        target:targetId,
         provider:'droplet',
         options:'hidesearch,hidedates'
       }).render();
@@ -846,6 +904,7 @@ function sessionClear(){
   sessionActive=false;
   sessionItemCount=0;
   updateSessionBanner();
+  destroyWidgetSession();
 }
 
 // ── POSTMESSAGE LISTENER (detect widget state changes) ──────
@@ -860,12 +919,13 @@ window.addEventListener('message',function(e){
 
   if(height>1500)_widgetWasLarge=true;
 
-  // Detect "Add to Booking" transition: was large, now small
+  // Detect "Add to Booking" transition: was large, now small.
+  // Preserve the iframe instead of destroying it, because the Checkfront cart is session-backed.
   if(_widgetWasLarge&&height<500&&height>100){
     _widgetWasLarge=false;
     updateSessionBanner();
     setTimeout(function(){
-      closeWidget();
+      hideWidgetPreserveSession();
       var mapPanel=document.querySelector('.map-panel');
       if(mapPanel&&document.getElementById('mapView').classList.contains('vis')){
         mapPanel.scrollIntoView({behavior:'smooth',block:'start'});
@@ -887,6 +947,7 @@ function bookSelected(){
 }
 function launchBooking(){
   if(cart.length===0)return;var first=cart[0],cl=cart.map(function(c){return c.label;}).join(', ');
+  var alreadyHadIframe=hasExistingCheckfrontIframe();
   sessionActive=true;
   sessionItemCount++;
   updateSessionBanner();
@@ -898,15 +959,19 @@ function launchBooking(){
     hint.innerHTML='You have items in your cart. Click <strong>Book Now</strong> below to add this one too. Use <strong>+ Add to Booking</strong> to keep adding, or continue through the prompts to complete your reservation when ready.';
   }
   document.getElementById('widgetTitle').textContent=sessionItemCount<=1?'Complete Your Reservation':'Add to Your Reservation';
-  document.getElementById('widgetSection').classList.add('vis');document.getElementById('widgetStallLabel').textContent=cl;
-  document.getElementById('widgetFrameHeader').textContent='Adding '+cl+' to your cart';document.getElementById('widgetMsg').style.display='block';document.getElementById('CF_WIDGET_TARGET').innerHTML='';
-  setTimeout(function(){document.getElementById('widgetSection').scrollIntoView({behavior:'smooth',block:'start'});},100);
+  document.getElementById('widgetStallLabel').textContent=cl;
+  document.getElementById('widgetFrameHeader').textContent='Adding '+cl+' to your cart';
+  document.getElementById('widgetMsg').style.display='block';
+  showWidgetSection();
+
   setTimeout(function(){try{document.getElementById('widgetMsg').style.display='none';
-    new CHECKFRONT.Widget({host:'circle-t-arena.manage.na1.bookingplatform.app',target:'CF_WIDGET_TARGET',item_id:String(first.itemId),slip:first.slip,date:fmtApi(document.getElementById('startDate').value),end_date:fmtApi(document.getElementById('endDate').value),provider:'droplet',options:'hidesearch,hidedates'}).render();
+    // First render starts clean. Later renders keep old iframes mounted as hidden session anchors.
+    var targetId=prepareWidgetTarget(alreadyHadIframe);
+    new CHECKFRONT.Widget({host:'circle-t-arena.manage.na1.bookingplatform.app',target:targetId,item_id:String(first.itemId),slip:first.slip,date:fmtApi(document.getElementById('startDate').value),end_date:fmtApi(document.getElementById('endDate').value),provider:'droplet',options:'hidesearch,hidedates'}).render();
     if(cart.length>1){document.getElementById('widgetMsg').style.display='block';document.getElementById('widgetMsg').innerHTML='<div style="margin-bottom:10px;color:var(--gldl);font-size:11px;">Booking '+first.label+' first. After completing, book remaining: '+cart.slice(1).map(function(c){return c.label;}).join(', ')+'.</div>';}
   }catch(err){document.getElementById('widgetMsg').style.display='block';document.getElementById('widgetMsg').innerHTML='Could not load reservation form. <a href="'+FALLBACK_URL+'" target="_blank" style="color:var(--gldl);">Book directly here</a>';}},500);
 }
-function closeWidget(){document.getElementById('widgetSection').classList.remove('vis');document.getElementById('CF_WIDGET_TARGET').innerHTML='';}
+function closeWidget(){hideWidgetPreserveSession();}
 
 // ── INIT ────────────────────────────────────────────────────
 window.addEventListener('load',function(){
