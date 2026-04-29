@@ -336,9 +336,6 @@ body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--tx); 
 .btn-session-checkout:hover { background:var(--gldl); }
 .btn-session-continue { background:var(--sf3); color:var(--gldl); border:1px solid var(--bd); }
 .btn-session-continue:hover { border-color:var(--gld); }
-
-/* ── Mobile route lab controls (temporary test build) ─────── */
-.mobile-route-lab{display:none;gap:8px;flex-wrap:wrap;padding:10px 12px 12px;border:2px solid var(--gld);margin:0 0 10px;background:rgba(212,170,68,0.16);position:sticky;top:56px;z-index:100000}.mobile-route-lab .route-lab-label{flex-basis:100%;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--gldl);text-transform:uppercase;letter-spacing:.08em}.mobile-route-lab button{flex:1 1 auto;min-width:74px;padding:10px 8px;border-radius:var(--radius);border:1px solid var(--gld);background:var(--sf3);color:var(--gldl);font-family:'JetBrains Mono',monospace;font-size:11px;cursor:pointer}.mobile-route-lab button:active{background:var(--gld);color:var(--bg)}.widget-section.vis .mobile-route-lab{display:flex!important}@media(max-width:900px){.widget-section.vis .mobile-route-lab{display:flex!important}}
 </style>
 </head>
 <body>
@@ -476,7 +473,6 @@ body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--tx); 
     <div><h3 id="widgetTitle">Complete Your Reservation</h3><div class="widget-stall" id="widgetStallLabel"></div></div>
     <button class="btn-widget-back" onclick="closeWidget()">✕ Close</button>
   </div>
-  <div class="mobile-route-lab" id="mobileRouteLab" aria-label="Mobile route test controls"><div class="route-lab-label">Temporary route test controls</div><button onclick="mobileRouteTest('reserveHash')">Reserve#</button><button onclick="mobileRouteTest('reserveAppendHash')">Append#</button><button onclick="mobileRouteTest('rootHash')">Root#</button><button onclick="mobileRouteTest('catalog')">Catalog</button></div>
   <div class="widget-frame">
     <div class="widget-frame-header" id="widgetFrameHeader">Completing reservation...</div>
     <div class="widget-hint" id="widgetHint">Click <strong>Book Now</strong> below to add this item to your cart. After confirming your dates, use <strong>+ Add to Booking</strong> to keep adding, or continue through the prompts to complete your reservation.</div>
@@ -541,7 +537,6 @@ var productMap={},bookedMap={},closedSet=new Set(),availCache={},cart=[],selecte
 
 // ── NEW: Multi-stall session tracking ───────────────────────
 var sessionActive=false;         // true after first item added via widget
-var mobileSelectedBookingContext=null; // temporary route-lab context for mobile native-route tests
 var widgetHeightHistory=[];      // track recent heights for transition detection
 var lastWidgetHeight=0;
 var sessionItemCount=0;          // track items added this session
@@ -927,7 +922,7 @@ function showWidgetSection(){
     var panel=document.getElementById('infoPanel');
     if(panel)panel.classList.remove('vis','compact');
     var backBtn=section.querySelector('.btn-widget-back');
-    if(backBtn)backBtn.textContent='Minimize';
+    if(backBtn)backBtn.textContent='Exit checkout';
   }else{
     var backBtnDesktop=section.querySelector('.btn-widget-back');
     if(backBtnDesktop)backBtnDesktop.textContent='✕ Close';
@@ -982,6 +977,8 @@ function sessionCheckout(){
       new CHECKFRONT.Widget({
         host:'circle-t-arena.manage.na1.bookingplatform.app',
         target:targetId,
+        provider:'droplet',
+        options:'hidesearch,hidedates'
       }).render();
     }catch(err){
       document.getElementById('widgetMsg').innerHTML='Could not load checkout. <a href="'+FALLBACK_URL+'" target="_blank" style="color:var(--gldl);">Complete booking here</a>';
@@ -995,53 +992,34 @@ function sessionClear(){
   destroyWidgetSession();
 }
 
-// ── CHECKFRONT HANDOFF ────────────────────────────────────
-// Intentionally no postMessage height monitoring or forced iframe routing here.
-// Once checkout is open, Checkfront owns its native add-more/cart flow.
+// ── POSTMESSAGE LISTENER (detect widget state changes) ──────
+var _widgetWasLarge=false;
+window.addEventListener('message',function(e){
+  if(!e.origin||!e.origin.includes('bookingplatform'))return;
+  if(typeof e.data!=='number')return;
+
+  var height=e.data;
+  var widgetVisible=document.getElementById('widgetSection').classList.contains('vis');
+  if(!widgetVisible)return;
+
+  if(height>1500)_widgetWasLarge=true;
+
+  // Detect "Add to Booking" transition: was large, now small.
+  // Preserve the iframe instead of destroying it, because the Checkfront cart is session-backed.
+  if(_widgetWasLarge&&height<500&&height>100){
+    _widgetWasLarge=false;
+    updateSessionBanner();
+    setTimeout(function(){
+      hideWidgetPreserveSession();
+      var mapPanel=document.querySelector('.map-panel');
+      if(mapPanel&&document.getElementById('mapView').classList.contains('vis')){
+        mapPanel.scrollIntoView({behavior:'smooth',block:'start'});
+      }
+    },600);
+  }
+});
 
 // ── BOOKING ─────────────────────────────────────────────────
-
-
-function buildMobileRouteTestUrl(kind, ctx){
-  if(!ctx)return FALLBACK_URL;
-  var host='https://circle-t-arena.manage.na1.bookingplatform.app';
-  var dateCompact=fmtApi(ctx.startDate), endCompact=fmtApi(ctx.endDate), cat=ctx.categoryId||'', item=ctx.itemId;
-  if(kind==='reserveAppendHash')return host+'/reserve/?date='+dateCompact+'&end_date='+endCompact+(cat?'&category_id='+encodeURIComponent(cat):'')+'&append=1#'+item+'@book@';
-  if(kind==='rootHash')return host+'/?date='+dateCompact+'&end_date='+endCompact+(cat?'&category_id='+encodeURIComponent(cat):'')+'#'+item+'@book@';
-  if(kind==='catalog')return host+'/reserve/?date='+dateCompact+'&end_date='+endCompact+(cat?'&category_id='+encodeURIComponent(cat):'')+'&view=H';
-  return host+'/reserve/?date='+dateCompact+'&end_date='+endCompact+(cat?'&category_id='+encodeURIComponent(cat):'')+'#'+item+'@book@';
-}
-function renderRawCheckfrontIframe(url){
-  var target=document.getElementById('CF_WIDGET_TARGET');
-  target.innerHTML=''; target.removeAttribute('data-active-target');
-  var iframe=document.createElement('iframe');
-  iframe.allow='payment'; iframe.name='checkfront'; iframe.className='CHECKFRONT_DROPLET'; iframe.src=url; iframe.frameBorder='0'; iframe.scrolling='yes';
-  iframe.style.cssText='height:100%;min-height:75vh;display:block;overflow:auto;width:1px;min-width:100%;border:0;background:#fff;';
-  target.appendChild(iframe); return iframe;
-}
-function mobileRouteTest(kind){
-  if(!mobileSelectedBookingContext){console.warn('No mobile selected booking context available.');return;}
-  var url=buildMobileRouteTestUrl(kind,mobileSelectedBookingContext);
-  console.log('[mobile-route-test]',kind,url);
-  document.getElementById('widgetMsg').style.display='none';
-  renderRawCheckfrontIframe(url);
-}
-
-function inferCheckfrontCategoryIdForItem(item){
-  if(!item || !currentArea) return '';
-  var n=Number(item.number);
-  if(currentArea.id==='barn-a') return item.type==='turnout' ? '3756' : '3740';
-  if(currentArea.id==='barn-b') return item.type==='rv' ? '3752' : '3742';
-  if(currentArea.id==='barn-c'){
-    if(item.type==='rv') return (n>=500 && n<=539) ? '3748' : '3747';
-    return (n>=560) ? '3751' : '3743';
-  }
-  if(currentArea.id==='vip-pool') return item.type==='rv' ? '3755' : '3758';
-  if(currentArea.id==='treeline') return '3757';
-  if(currentArea.id==='vip-hill') return item.type==='rv' ? '3749' : '3746';
-  return '';
-}
-
 function bookSelected(){
   if(!selectedCell||!selectedLabel)return;
   var type=selectedCell.dataset.type;
@@ -1054,6 +1032,21 @@ function bookSelected(){
 }
 function launchBooking(){
   if(cart.length===0)return;var first=cart[0],cl=cart.map(function(c){return c.label;}).join(', ');
+  // MOBILE TEST: leave the Vercel app and open Checkfront as the top-level page.
+  // This avoids iframe/widget storage quirks and tests whether Checkfronts native
+  // reserve app can deep-link to the selected item using its own #ITEM route.
+  if(isMobileCheckoutMode()){
+    var s=document.getElementById('startDate').value;
+    var e=document.getElementById('endDate').value;
+    var compact=fmtApi(s);
+    var params=new URLSearchParams();
+    if(compact)params.set('date',compact);
+    if(s)params.set('start_date',s);
+    if(e)params.set('end_date',e);
+        var url='https://circle-t-arena.manage.na1.bookingplatform.app/reserve/?'+params.toString()+'#'+encodeURIComponent(String(first.itemId))+'@book@';
+    window.location.href=url;
+    return;
+  }
   var alreadyHadIframe=hasExistingCheckfrontIframe();
   if(isMobileCheckoutMode()&&alreadyHadIframe){
     // Mobile cannot reliably use a new app-generated widget to append into the same cart.
@@ -1072,7 +1065,7 @@ function launchBooking(){
   _widgetWasLarge=false;
   var hint=document.getElementById('widgetHint');
   if(isMobileCheckoutMode()){
-    hint.innerHTML='Your selected spot has been loaded below. Tap <strong>Book Now</strong> to add it to your booking. To reserve additional stalls or RV sites, use <strong>+ Add to Booking</strong> inside checkout before entering payment details.';
+    hint.innerHTML='Your selected spot has been loaded below. Tap <strong>Book Now</strong> in checkout to add it to your booking. To reserve additional stalls or RV sites, use <strong>+ Add to Booking</strong> inside checkout before entering payment details.';
   }else if(sessionItemCount<=1){
     hint.innerHTML='Click <strong>Book Now</strong> below to add this item to your cart. After confirming your dates, use <strong>+ Add to Booking</strong> to keep adding, or continue through the prompts to enter your details and complete your reservation.';
   }else{
@@ -1087,17 +1080,7 @@ function launchBooking(){
   setTimeout(function(){try{document.getElementById('widgetMsg').style.display='none';
     // First render starts clean. Later renders keep old iframes mounted as hidden session anchors.
     var targetId=prepareWidgetTarget(alreadyHadIframe);
-    var startInput=document.getElementById('startDate').value;
-    var endInput=document.getElementById('endDate').value;
-    if(isMobileCheckoutMode()){
-      var inferredCategoryId=inferCheckfrontCategoryIdForItem(first);
-      mobileSelectedBookingContext={itemId:String(first.itemId),label:first.label,startDate:startInput,endDate:endInput,categoryId:inferredCategoryId};
-      var nativeUrl=buildMobileRouteTestUrl('reserveHash',mobileSelectedBookingContext);
-      renderRawCheckfrontIframe(nativeUrl);
-    }else{
-      var widgetConfig={host:'circle-t-arena.manage.na1.bookingplatform.app',target:targetId,item_id:String(first.itemId),date:fmtApi(startInput),end_date:fmtApi(endInput),slip:first.slip,provider:'droplet',options:'hidesearch,hidedates'};
-      new CHECKFRONT.Widget(widgetConfig).render();
-    }
+    new CHECKFRONT.Widget({host:'circle-t-arena.manage.na1.bookingplatform.app',target:targetId,item_id:String(first.itemId),slip:first.slip,date:fmtApi(document.getElementById('startDate').value),end_date:fmtApi(document.getElementById('endDate').value),provider:'droplet',options:'hidesearch,hidedates'}).render();
     if(cart.length>1){document.getElementById('widgetMsg').style.display='block';document.getElementById('widgetMsg').innerHTML='<div style="margin-bottom:10px;color:var(--gldl);font-size:11px;">Booking '+first.label+' first. After completing, book remaining: '+cart.slice(1).map(function(c){return c.label;}).join(', ')+'.</div>';}
   }catch(err){document.getElementById('widgetMsg').style.display='block';document.getElementById('widgetMsg').innerHTML='Could not load reservation form. <a href="'+FALLBACK_URL+'" target="_blank" style="color:var(--gldl);">Book directly here</a>';}},500);
 }
