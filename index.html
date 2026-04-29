@@ -1043,7 +1043,7 @@ function launchBooking(){
     if(compact)params.set('date',compact);
     if(s)params.set('start_date',s);
     if(e)params.set('end_date',e);
-        var url='https://circle-t-arena.manage.na1.bookingplatform.app/reserve/?'+params.toString()+'#'+encodeURIComponent(String(first.itemId))+'@book@';
+        var url='https://circle-t-arena.manage.na1.bookingplatform.app/?'+params.toString()+'#'+encodeURIComponent(String(first.itemId))+'@book@';
     window.location.href=url;
     return;
   }
