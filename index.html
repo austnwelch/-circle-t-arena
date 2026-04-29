@@ -1056,19 +1056,26 @@ function launchBooking(){
   setTimeout(function(){try{document.getElementById('widgetMsg').style.display='none';
     // First render starts clean. Later renders keep old iframes mounted as hidden session anchors.
     var targetId=prepareWidgetTarget(alreadyHadIframe);
+    var startInput=document.getElementById('startDate').value;
+    var endInput=document.getElementById('endDate').value;
     var widgetConfig={
       host:'circle-t-arena.manage.na1.bookingplatform.app',
       target:targetId,
-      item_id:String(first.itemId),
-      date:fmtApi(document.getElementById('startDate').value),
-      end_date:fmtApi(document.getElementById('endDate').value)
+      item_id:String(first.itemId)
     };
     if(isMobileCheckoutMode()){
-      // Test: enter the native widget flow with item/date/category only. Do not pass slip or droplet constraints.
+      // Test: no slip/droplet, but pass dates in the same parameter names/formats the native reserve app uses.
+      // Earlier mobile test loaded the right item but ignored compact date/end_date values.
+      widgetConfig.start_date=startInput;
+      widgetConfig.end_date=endInput;
+      widgetConfig.date=fmtApi(startInput);
+      widgetConfig.view='H';
       var inferredCategoryId=inferCheckfrontCategoryIdForItem(first);
       if(inferredCategoryId) widgetConfig.category_id=inferredCategoryId;
     }else{
       // Preserve known-good desktop behavior.
+      widgetConfig.date=fmtApi(startInput);
+      widgetConfig.end_date=fmtApi(endInput);
       widgetConfig.slip=first.slip;
       widgetConfig.provider='droplet';
       widgetConfig.options='hidesearch,hidedates';
