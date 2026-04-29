@@ -288,17 +288,6 @@ body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--tx); 
   body.mobile-checkout-active #CF_WIDGET_TARGET,
   body.mobile-checkout-active #CF_WIDGET_TARGET > div,
   body.mobile-checkout-active .CHECKFRONT_DROPLET { min-height:100%; }
-  body.mobile-checkout-active .cf-native-reserve-frame {
-    display:block !important;
-    width:1px !important;
-    min-width:100% !important;
-    height:calc(100dvh - 178px) !important;
-    min-height:560px !important;
-    border:0 !important;
-    overflow:auto !important;
-    -webkit-overflow-scrolling:touch;
-    touch-action:auto !important;
-  }
 }
 .err { padding:12px 16px; background:#2a1010; border:1px solid var(--red); border-radius:var(--radius); color:#c06060; font-size:13px; margin:16px 0; }
 
@@ -988,8 +977,6 @@ function sessionCheckout(){
       new CHECKFRONT.Widget({
         host:'circle-t-arena.manage.na1.bookingplatform.app',
         target:targetId,
-        provider:'droplet',
-        options:'hidesearch,hidedates'
       }).render();
     }catch(err){
       document.getElementById('widgetMsg').innerHTML='Could not load checkout. <a href="'+FALLBACK_URL+'" target="_blank" style="color:var(--gldl);">Complete booking here</a>';
@@ -1004,10 +991,26 @@ function sessionClear(){
 }
 
 // ── CHECKFRONT HANDOFF ────────────────────────────────────
-// Native-route mobile test: no postMessage height monitoring or forced auto-routing.
-// Once checkout is open, Checkfront owns its own native booking/cart flow.
+// Intentionally no postMessage height monitoring or forced iframe routing here.
+// Once checkout is open, Checkfront owns its native add-more/cart flow.
 
 // ── BOOKING ─────────────────────────────────────────────────
+
+function inferCheckfrontCategoryIdForItem(item){
+  if(!item || !currentArea) return '';
+  var n=Number(item.number);
+  if(currentArea.id==='barn-a') return item.type==='turnout' ? '3756' : '3740';
+  if(currentArea.id==='barn-b') return item.type==='rv' ? '3752' : '3742';
+  if(currentArea.id==='barn-c'){
+    if(item.type==='rv') return (n>=500 && n<=539) ? '3748' : '3747';
+    return (n>=560) ? '3751' : '3743';
+  }
+  if(currentArea.id==='vip-pool') return item.type==='rv' ? '3755' : '3758';
+  if(currentArea.id==='treeline') return '3757';
+  if(currentArea.id==='vip-hill') return item.type==='rv' ? '3749' : '3746';
+  return '';
+}
+
 function bookSelected(){
   if(!selectedCell||!selectedLabel)return;
   var type=selectedCell.dataset.type;
@@ -1017,35 +1020,6 @@ function bookSelected(){
   var cached=availCache[prod.itemId];if(!cached||!cached.slip)return;
   cart=[{itemId:prod.itemId,label:selectedLabel,type:type,number:number,slip:cached.slip}];
   launchBooking();
-}
-function getNativeReserveBaseUrl(){
-  var d=getDates();
-  var params=new URLSearchParams();
-  if(d.start)params.set('date',fmtApi(d.start));
-  if(d.end)params.set('end_date',fmtApi(d.end));
-  return 'https://circle-t-arena.manage.na1.bookingplatform.app/reserve/?'+params.toString();
-}
-function getNativeReserveBookUrl(itemId){
-  // Native Checkfront product cards use hash routes like /#ITEMID@book@, but
-  // the first direct-hash test showed Checkfront may ignore that route when
-  // it is present on the initial page load. This test loads the native reserve
-  // app first, then changes the same iframe URL to the hash route after the
-  // app has had a chance to boot.
-  return getNativeReserveBaseUrl()+'#'+encodeURIComponent(String(itemId))+'@book@';
-}
-function renderNativeReserveBookFrame(targetId,itemId){
-  var target=document.getElementById(targetId);
-  if(!target)return;
-  var baseUrl=getNativeReserveBaseUrl();
-  var bookUrl=getNativeReserveBookUrl(itemId);
-  var iframeId='CF_NATIVE_RESERVE_IFRAME';
-  target.innerHTML='<iframe id="'+iframeId+'" allow="payment" name="checkfront" class="CHECKFRONT_DROPLET cf-native-reserve-frame" src="'+baseUrl+'" frameborder="0" scrolling="yes"></iframe>';
-  setTimeout(function(){
-    var frame=document.getElementById(iframeId);
-    if(frame){
-      frame.src=bookUrl;
-    }
-  },1800);
 }
 function launchBooking(){
   if(cart.length===0)return;var first=cart[0],cl=cart.map(function(c){return c.label;}).join(', ');
@@ -1067,7 +1041,7 @@ function launchBooking(){
   _widgetWasLarge=false;
   var hint=document.getElementById('widgetHint');
   if(isMobileCheckoutMode()){
-    hint.innerHTML='Your selected spot has been loaded below. Tap <strong>Book Now</strong> in checkout to add it to your booking. To reserve additional stalls or RV sites, use <strong>+ Add to Booking</strong> inside checkout before entering payment details.';
+    hint.innerHTML='Your selected spot has been loaded below. Tap <strong>Book Now</strong> to add it to your booking. To reserve additional stalls or RV sites, use <strong>+ Add to Booking</strong> inside checkout before entering payment details.';
   }else if(sessionItemCount<=1){
     hint.innerHTML='Click <strong>Book Now</strong> below to add this item to your cart. After confirming your dates, use <strong>+ Add to Booking</strong> to keep adding, or continue through the prompts to enter your details and complete your reservation.';
   }else{
@@ -1082,14 +1056,24 @@ function launchBooking(){
   setTimeout(function(){try{document.getElementById('widgetMsg').style.display='none';
     // First render starts clean. Later renders keep old iframes mounted as hidden session anchors.
     var targetId=prepareWidgetTarget(alreadyHadIframe);
+    var widgetConfig={
+      host:'circle-t-arena.manage.na1.bookingplatform.app',
+      target:targetId,
+      item_id:String(first.itemId),
+      date:fmtApi(document.getElementById('startDate').value),
+      end_date:fmtApi(document.getElementById('endDate').value)
+    };
     if(isMobileCheckoutMode()){
-      // Mobile test: load Checkfront's native hosted reserve app first, then
-      // move the same iframe onto Checkfront's own product hash route after
-      // boot. This tries to mirror a native catalog product click.
-      renderNativeReserveBookFrame(targetId, first.itemId);
+      // Test: enter the native widget flow with item/date/category only. Do not pass slip or droplet constraints.
+      var inferredCategoryId=inferCheckfrontCategoryIdForItem(first);
+      if(inferredCategoryId) widgetConfig.category_id=inferredCategoryId;
     }else{
-      new CHECKFRONT.Widget({host:'circle-t-arena.manage.na1.bookingplatform.app',target:targetId,item_id:String(first.itemId),slip:first.slip,date:fmtApi(document.getElementById('startDate').value),end_date:fmtApi(document.getElementById('endDate').value),provider:'droplet',options:'hidesearch,hidedates'}).render();
+      // Preserve known-good desktop behavior.
+      widgetConfig.slip=first.slip;
+      widgetConfig.provider='droplet';
+      widgetConfig.options='hidesearch,hidedates';
     }
+    new CHECKFRONT.Widget(widgetConfig).render();
     if(cart.length>1){document.getElementById('widgetMsg').style.display='block';document.getElementById('widgetMsg').innerHTML='<div style="margin-bottom:10px;color:var(--gldl);font-size:11px;">Booking '+first.label+' first. After completing, book remaining: '+cart.slice(1).map(function(c){return c.label;}).join(', ')+'.</div>';}
   }catch(err){document.getElementById('widgetMsg').style.display='block';document.getElementById('widgetMsg').innerHTML='Could not load reservation form. <a href="'+FALLBACK_URL+'" target="_blank" style="color:var(--gldl);">Book directly here</a>';}},500);
 }
