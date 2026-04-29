@@ -946,7 +946,6 @@ function destroyWidgetSession(){
   var panel=document.getElementById('infoPanel');
   if(panel)panel.classList.remove('compact');
   _widgetWasLarge=false;
-  _mobileHostedReserveHandoffDone=false;
 }
 function sessionAddMore(){
   hideWidgetPreserveSession();
@@ -991,54 +990,9 @@ function sessionClear(){
   destroyWidgetSession();
 }
 
-// ── MOBILE CHECKOUT HANDOFF TO HOSTED RESERVE ──────────────
-var _widgetWasLarge=false;
-var _mobileHostedReserveHandoffDone=false;
-function getActiveCheckfrontIframe(){
-  var target=document.getElementById('CF_WIDGET_TARGET');
-  if(!target)return null;
-  return target.querySelector('.cf-render-active iframe')||target.querySelector('iframe.CHECKFRONT_DROPLET')||target.querySelector('iframe');
-}
-function getHostedReserveUrl(){
-  var d=getDates();
-  var url='https://circle-t-arena.manage.na1.bookingplatform.app/reserve/';
-  var params=[];
-  if(d.start)params.push('date='+encodeURIComponent(fmtApi(d.start)));
-  params.push('append=1');
-  return url+'?'+params.join('&');
-}
-function routeMobileCheckoutToHostedReserve(){
-  if(_mobileHostedReserveHandoffDone)return;
-  if(!isMobileCheckoutMode()||!sessionActive)return;
-  var iframe=getActiveCheckfrontIframe();
-  if(!iframe)return;
-  _mobileHostedReserveHandoffDone=true;
-  document.getElementById('widgetTitle').textContent='Continue Your Reservation';
-  document.getElementById('widgetStallLabel').textContent='Your booking is already in progress';
-  document.getElementById('widgetHint').innerHTML='Your booking is in progress below. Browse the available options, add anything else needed, or continue through the prompts to enter details and payment.';
-  iframe.src=getHostedReserveUrl();
-}
-
-// ── POSTMESSAGE LISTENER (Checkfront iframe resize + mobile handoff) ─────
-window.addEventListener('message',function(e){
-  if(!e.origin||!e.origin.includes('bookingplatform'))return;
-  if(typeof e.data!=='number')return;
-  var height=e.data;
-
-  // Mobile starts in a product-specific droplet so the first app-selected spot can
-  // be loaded directly. After the cart/invoice has existed and Checkfront returns
-  // to an add-more/product state, move the same iframe to the full hosted reserve
-  // page. This keeps the active booking session but exits the constrained droplet
-  // context that otherwise sends users back to the original product.
-  if(isMobileCheckoutMode()&&sessionActive){
-    if(height>1800)_widgetWasLarge=true;
-    if(_widgetWasLarge&&!_mobileHostedReserveHandoffDone&&height>350&&height<1800){
-      setTimeout(routeMobileCheckoutToHostedReserve,250);
-    }
-  }else{
-    if(height>1500)_widgetWasLarge=true;
-  }
-});
+// ── CHECKFRONT HANDOFF ────────────────────────────────────
+// Intentionally no postMessage height monitoring or forced iframe routing here.
+// Once checkout is open, Checkfront owns its native add-more/cart flow.
 
 // ── BOOKING ─────────────────────────────────────────────────
 function bookSelected(){
@@ -1069,10 +1023,9 @@ function launchBooking(){
   sessionItemCount++;
   updateSessionBanner();
   _widgetWasLarge=false;
-  _mobileHostedReserveHandoffDone=false;
   var hint=document.getElementById('widgetHint');
   if(isMobileCheckoutMode()){
-    hint.innerHTML='Your selected spot has been loaded below. Tap <strong>Book Now</strong> to add it to your booking. To reserve additional stalls or RV sites, use <strong>+ Add to Booking</strong> before entering payment details. You should then be returned to the full list of booking options.';
+    hint.innerHTML='Your selected spot has been loaded below. Tap <strong>Book Now</strong> to add it to your booking. To reserve additional stalls or RV sites, use <strong>+ Add to Booking</strong> inside checkout before entering payment details.';
   }else if(sessionItemCount<=1){
     hint.innerHTML='Click <strong>Book Now</strong> below to add this item to your cart. After confirming your dates, use <strong>+ Add to Booking</strong> to keep adding, or continue through the prompts to enter your details and complete your reservation.';
   }else{
