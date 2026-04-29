@@ -336,6 +336,9 @@ body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--tx); 
 .btn-session-checkout:hover { background:var(--gldl); }
 .btn-session-continue { background:var(--sf3); color:var(--gldl); border:1px solid var(--bd); }
 .btn-session-continue:hover { border-color:var(--gld); }
+
+/* ── Mobile route lab controls (temporary test build) ─────── */
+.mobile-route-lab{display:none;gap:6px;flex-wrap:wrap;padding:8px 0 12px;border-bottom:1px solid var(--bd);margin-bottom:10px}.mobile-route-lab button{flex:1 1 auto;min-width:72px;padding:7px 8px;border-radius:var(--radius);border:1px solid var(--bd);background:var(--sf3);color:var(--txd);font-family:'JetBrains Mono',monospace;font-size:10px;cursor:pointer}.mobile-route-lab button:active{background:var(--gld);color:var(--bg)}@media(max-width:900px){body.mobile-checkout-active .mobile-route-lab{display:flex}}
 </style>
 </head>
 <body>
@@ -473,6 +476,7 @@ body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--tx); 
     <div><h3 id="widgetTitle">Complete Your Reservation</h3><div class="widget-stall" id="widgetStallLabel"></div></div>
     <button class="btn-widget-back" onclick="closeWidget()">✕ Close</button>
   </div>
+  <div class="mobile-route-lab" id="mobileRouteLab" aria-label="Mobile route test controls"><button onclick="mobileRouteTest('reserveHash')">Reserve#</button><button onclick="mobileRouteTest('reserveAppendHash')">Append#</button><button onclick="mobileRouteTest('rootHash')">Root#</button><button onclick="mobileRouteTest('catalog')">Catalog</button></div>
   <div class="widget-frame">
     <div class="widget-frame-header" id="widgetFrameHeader">Completing reservation...</div>
     <div class="widget-hint" id="widgetHint">Click <strong>Book Now</strong> below to add this item to your cart. After confirming your dates, use <strong>+ Add to Booking</strong> to keep adding, or continue through the prompts to complete your reservation.</div>
@@ -537,6 +541,7 @@ var productMap={},bookedMap={},closedSet=new Set(),availCache={},cart=[],selecte
 
 // ── NEW: Multi-stall session tracking ───────────────────────
 var sessionActive=false;         // true after first item added via widget
+var mobileSelectedBookingContext=null; // temporary route-lab context for mobile native-route tests
 var widgetHeightHistory=[];      // track recent heights for transition detection
 var lastWidgetHeight=0;
 var sessionItemCount=0;          // track items added this session
@@ -996,6 +1001,32 @@ function sessionClear(){
 
 // ── BOOKING ─────────────────────────────────────────────────
 
+
+function buildMobileRouteTestUrl(kind, ctx){
+  if(!ctx)return FALLBACK_URL;
+  var host='https://circle-t-arena.manage.na1.bookingplatform.app';
+  var dateCompact=fmtApi(ctx.startDate), endCompact=fmtApi(ctx.endDate), cat=ctx.categoryId||'', item=ctx.itemId;
+  if(kind==='reserveAppendHash')return host+'/reserve/?date='+dateCompact+'&end_date='+endCompact+(cat?'&category_id='+encodeURIComponent(cat):'')+'&append=1#'+item+'@book@';
+  if(kind==='rootHash')return host+'/?date='+dateCompact+'&end_date='+endCompact+(cat?'&category_id='+encodeURIComponent(cat):'')+'#'+item+'@book@';
+  if(kind==='catalog')return host+'/reserve/?date='+dateCompact+'&end_date='+endCompact+(cat?'&category_id='+encodeURIComponent(cat):'')+'&view=H';
+  return host+'/reserve/?date='+dateCompact+'&end_date='+endCompact+(cat?'&category_id='+encodeURIComponent(cat):'')+'#'+item+'@book@';
+}
+function renderRawCheckfrontIframe(url){
+  var target=document.getElementById('CF_WIDGET_TARGET');
+  target.innerHTML=''; target.removeAttribute('data-active-target');
+  var iframe=document.createElement('iframe');
+  iframe.allow='payment'; iframe.name='checkfront'; iframe.className='CHECKFRONT_DROPLET'; iframe.src=url; iframe.frameBorder='0'; iframe.scrolling='yes';
+  iframe.style.cssText='height:100%;min-height:75vh;display:block;overflow:auto;width:1px;min-width:100%;border:0;background:#fff;';
+  target.appendChild(iframe); return iframe;
+}
+function mobileRouteTest(kind){
+  if(!mobileSelectedBookingContext){console.warn('No mobile selected booking context available.');return;}
+  var url=buildMobileRouteTestUrl(kind,mobileSelectedBookingContext);
+  console.log('[mobile-route-test]',kind,url);
+  document.getElementById('widgetMsg').style.display='none';
+  renderRawCheckfrontIframe(url);
+}
+
 function inferCheckfrontCategoryIdForItem(item){
   if(!item || !currentArea) return '';
   var n=Number(item.number);
@@ -1058,29 +1089,15 @@ function launchBooking(){
     var targetId=prepareWidgetTarget(alreadyHadIframe);
     var startInput=document.getElementById('startDate').value;
     var endInput=document.getElementById('endDate').value;
-    var widgetConfig={
-      host:'circle-t-arena.manage.na1.bookingplatform.app',
-      target:targetId,
-      item_id:String(first.itemId)
-    };
     if(isMobileCheckoutMode()){
-      // Test: no slip/droplet, but pass dates in the same parameter names/formats the native reserve app uses.
-      // Earlier mobile test loaded the right item but ignored compact date/end_date values.
-      widgetConfig.start_date=startInput;
-      widgetConfig.end_date=endInput;
-      widgetConfig.date=fmtApi(startInput);
-      widgetConfig.view='H';
       var inferredCategoryId=inferCheckfrontCategoryIdForItem(first);
-      if(inferredCategoryId) widgetConfig.category_id=inferredCategoryId;
+      mobileSelectedBookingContext={itemId:String(first.itemId),label:first.label,startDate:startInput,endDate:endInput,categoryId:inferredCategoryId};
+      var nativeUrl=buildMobileRouteTestUrl('reserveHash',mobileSelectedBookingContext);
+      renderRawCheckfrontIframe(nativeUrl);
     }else{
-      // Preserve known-good desktop behavior.
-      widgetConfig.date=fmtApi(startInput);
-      widgetConfig.end_date=fmtApi(endInput);
-      widgetConfig.slip=first.slip;
-      widgetConfig.provider='droplet';
-      widgetConfig.options='hidesearch,hidedates';
+      var widgetConfig={host:'circle-t-arena.manage.na1.bookingplatform.app',target:targetId,item_id:String(first.itemId),date:fmtApi(startInput),end_date:fmtApi(endInput),slip:first.slip,provider:'droplet',options:'hidesearch,hidedates'};
+      new CHECKFRONT.Widget(widgetConfig).render();
     }
-    new CHECKFRONT.Widget(widgetConfig).render();
     if(cart.length>1){document.getElementById('widgetMsg').style.display='block';document.getElementById('widgetMsg').innerHTML='<div style="margin-bottom:10px;color:var(--gldl);font-size:11px;">Booking '+first.label+' first. After completing, book remaining: '+cart.slice(1).map(function(c){return c.label;}).join(', ')+'.</div>';}
   }catch(err){document.getElementById('widgetMsg').style.display='block';document.getElementById('widgetMsg').innerHTML='Could not load reservation form. <a href="'+FALLBACK_URL+'" target="_blank" style="color:var(--gldl);">Book directly here</a>';}},500);
 }
