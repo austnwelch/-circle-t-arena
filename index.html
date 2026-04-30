@@ -218,9 +218,16 @@ body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--tx); 
 .lw.chk { background:var(--chk); border-color:var(--gld); }
 .lw.cart { background:var(--chk); border-color:var(--gldl); box-shadow:0 0 0 1px var(--gldl); }
 
-.mobile-cart-fab { display:none; position:fixed; right:14px; bottom:max(18px, env(safe-area-inset-bottom)); z-index:1200; align-items:center; gap:8px; padding:10px 13px; border-radius:999px; background:var(--gld); color:var(--bg); border:1px solid var(--gldl); font-family:'DM Sans',sans-serif; font-size:13px; font-weight:800; box-shadow:0 8px 26px rgba(0,0,0,0.38); cursor:pointer; }
-.mobile-cart-fab .cart-icon { font-size:15px; line-height:1; }
+.mobile-cart-fab { display:none; }
 .mobile-cart-fab.vis { display:none; }
+.mobile-checkout-bar { display:none; position:fixed; left:0; right:0; bottom:0; z-index:1250; padding:10px 12px; padding-bottom:max(10px, env(safe-area-inset-bottom)); background:rgba(30,27,22,0.98); border-top:2px solid var(--gld); box-shadow:0 -8px 28px rgba(0,0,0,0.4); }
+.mobile-checkout-bar.vis { display:none; }
+.mobile-checkout-bar-inner { display:flex; align-items:center; justify-content:space-between; gap:10px; max-width:760px; margin:0 auto; }
+.mobile-checkout-bar-copy { min-width:0; }
+.mobile-checkout-bar-title { font-size:13px; font-weight:800; color:var(--grnl); display:flex; align-items:center; gap:7px; }
+.mobile-checkout-bar-title::before { content:''; width:8px; height:8px; border-radius:50%; background:var(--grnl); flex-shrink:0; }
+.mobile-checkout-bar-sub { font-size:11px; color:var(--txd); margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.mobile-checkout-bar-btn { flex-shrink:0; padding:10px 14px; border-radius:999px; border:1px solid var(--gldl); background:var(--gld); color:var(--bg); font-family:'DM Sans',sans-serif; font-size:13px; font-weight:900; cursor:pointer; }
 
 
 @media(max-width:900px){
@@ -231,30 +238,25 @@ body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--tx); 
   .hub-grid { grid-template-columns:1fr; }
   .session-banner { display:none !important; }
 
-  /* Mobile checkout mode: keep Checkfront in normal document flow so tall iframe content can scroll reliably. */
-  body.widget-active { overflow:auto; }
-  body.widget-active .hdr,
-  body.widget-active .datebar,
-  body.widget-active .progress-wrap,
-  body.widget-active .fallback-banner,
-  body.widget-active .map-view,
-  body.widget-active .hub,
-  body.widget-active .legend,
-  body.widget-active .info-panel,
-  body.widget-active .session-banner,
+  /* Mobile checkout mode: give Checkfront the screen and keep the stall info drawer out of the way. */
+  body.widget-active { overflow:hidden; }
+  body.widget-active .info-panel { display:none !important; transform:translateY(100%) !important; pointer-events:none !important; }
+  body.widget-active .widget-section.vis { display:flex; flex-direction:column; position:fixed; inset:0; z-index:5000; padding:0; padding-top:max(12px, env(safe-area-inset-top)); padding-bottom:max(8px, env(safe-area-inset-bottom)); overflow:hidden; background:var(--sf2); border-top:none; }
+  body.widget-active .widget-header { flex-shrink:0; position:relative; z-index:3; background:var(--sf2); padding:10px 12px 12px; margin-bottom:0; align-items:flex-start; border-bottom:1px solid var(--bd); }
+  body.widget-active .widget-frame { flex:1; min-height:0; display:flex; flex-direction:column; overflow:auto; -webkit-overflow-scrolling:touch; border-radius:0; border-left:none; border-right:none; }
+  body.widget-active .session-banner { display:none !important; }
   body.widget-active .mobile-cart-fab { display:none !important; }
-  body.widget-active .widget-section.vis { display:block; position:relative; z-index:5000; min-height:100vh; padding:0; overflow:visible; background:var(--sf2); border-top:none; }
-  body.widget-active .widget-header { position:sticky; top:0; z-index:5; background:var(--sf2); padding:12px 14px; margin-bottom:0; align-items:flex-start; border-bottom:1px solid var(--bd); }
-  body.widget-active .widget-frame { display:block; overflow:visible; border-radius:0; border-left:none; border-right:none; border-bottom:none; }
-  body.widget-active .widget-wrap { padding:0; min-height:72vh; overflow:visible; }
-  body.widget-active .widget-hint { font-size:14px; line-height:1.4; padding:12px 14px; }
-  body.widget-active .widget-header h3 { font-size:22px; line-height:1.05; }
+  body.widget-active .mobile-checkout-bar { display:none !important; }
+  body.widget-active .widget-wrap { flex:1; padding:8px; }
+  body.widget-active .widget-hint { font-size:14px; line-height:1.4; padding:12px 14px; flex-shrink:0; }
+  body.widget-active .widget-header h3 { font-size:21px; line-height:1.05; }
   body.widget-active .widget-stall { font-size:13px; }
   body.widget-active .btn-widget-back { font-size:15px; padding:10px 14px; }
-  body.widget-active .cart-block,
+  body.widget-active .cart-block { display:none !important; }
   body:not(.widget-active) .cart-block { display:none !important; }
-  body.widget-active #CF_WIDGET_TARGET iframe { display:block !important; width:1px !important; min-width:100% !important; min-height:78vh; }
-  .mobile-cart-fab.vis { display:flex; }
+  .mobile-cart-fab.vis { display:none !important; }
+  .mobile-checkout-bar.vis { display:block; }
+  body.has-mobile-checkout-bar .map-panel { padding-bottom:92px; }
 }
 .flow-toast { display:none; position:fixed; left:16px; right:16px; bottom:max(18px, env(safe-area-inset-bottom)); z-index:7000; padding:13px 16px; background:var(--sf); border:1px solid var(--gld); border-radius:8px; color:var(--gldl); font-size:14px; font-weight:700; box-shadow:0 8px 26px rgba(0,0,0,0.35); text-align:center; }
 .flow-toast.vis { display:block; animation:toastIn 0.18s ease-out; }
@@ -311,12 +313,6 @@ body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--tx); 
 .btn-session-checkout:hover { background:var(--gldl); }
 .btn-session-continue { background:var(--sf3); color:var(--gldl); border:1px solid var(--bd); }
 .btn-session-continue:hover { border-color:var(--gld); }
-
-/* Cart review iframe generated by the parent app */
-.widget-wrap iframe.CHECKFRONT_DROPLET { width:1px !important; min-width:100% !important; border:0 !important; background:#fff; }
-@media(max-width:900px){
-}
-
 </style>
 </head>
 <body>
@@ -370,7 +366,15 @@ body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--tx); 
   </div>
 </div>
 
-<button class="mobile-cart-fab" id="mobileCartFab" onclick="sessionCheckout()" aria-label="View saved booking cart"><span class="cart-icon">🛒</span><span id="mobileCartFabText">Resume checkout</span></button>
+<div class="mobile-checkout-bar" id="mobileCheckoutBar" role="region" aria-label="Booking in progress">
+  <div class="mobile-checkout-bar-inner">
+    <div class="mobile-checkout-bar-copy">
+      <div class="mobile-checkout-bar-title">Booking in progress</div>
+      <div class="mobile-checkout-bar-sub">Choose another spot below, or continue checkout.</div>
+    </div>
+    <button class="mobile-checkout-bar-btn" onclick="mobileContinueCheckout()">Continue checkout</button>
+  </div>
+</div>
 
 <div class="datebar">
   <div class="field">
@@ -924,10 +928,9 @@ function scrollToCheckoutPanel(){
   if(!ws)return;
   setTimeout(function(){
     if(isTouch){
-      ws.scrollIntoView({behavior:'auto',block:'start'});
+      ws.scrollTop=0;
+      var wf=document.querySelector('.widget-frame'); if(wf)wf.scrollTop=0;
       window.scrollTo(0,0);
-      document.documentElement.scrollTop=0;
-      document.body.scrollTop=0;
     }else{
       ws.scrollIntoView({behavior:'smooth',block:'start'});
     }
@@ -937,19 +940,15 @@ function scrollToCheckoutPanel(){
 // ── SESSION BANNER (NEW: multi-stall flow) ──────────────────
 function updateSessionBanner(){
   var banner=document.getElementById('sessionBanner');
-  var fab=document.getElementById('mobileCartFab');
-  var fabText=document.getElementById('mobileCartFabText');
+  var bar=document.getElementById('mobileCheckoutBar');
   if(sessionActive){
     banner.classList.add('vis');
-    document.getElementById('sessionBannerText').textContent=
-      sessionItemCount>0?(sessionItemCount+' item'+(sessionItemCount!==1?'s':'')+' in your booking cart'):'Booking in progress';
-    if(fab){
-      fab.classList.add('vis');
-      if(fabText)fabText.textContent=isTouch?'Resume checkout':'View cart';
-    }
+    document.getElementById('sessionBannerText').textContent='Booking in progress';
+    if(bar){bar.classList.add('vis');document.body.classList.add('has-mobile-checkout-bar');}
   }else{
     banner.classList.remove('vis');
-    if(fab)fab.classList.remove('vis');
+    if(bar)bar.classList.remove('vis');
+    document.body.classList.remove('has-mobile-checkout-bar');
   }
 }
 function sessionAddMore(){
@@ -964,110 +963,87 @@ function hideWidgetForMap(){
   }
 }
 function cfGetSavedCartItems(){
-  try{
-    var raw=cfLastNonEmptyCart||sessionStorage.getItem('CheckfrontCart')||localStorage.getItem('CheckfrontCart')||'[]';
-    var parsed=JSON.parse(raw);
-    return Array.isArray(parsed)?parsed:[];
-  }catch(e){return [];}
-}
-function cfGetPrimaryCartItem(){
-  var items=cfGetSavedCartItems();
-  for(var i=items.length-1;i>=0;i--){
-    var it=items[i];
-    if(it&&it.item_id&&it.sku!=='shavings')return it;
+  var sources=[];
+  if(cfLastNonEmptyCart)sources.push(cfLastNonEmptyCart);
+  try{sources.push(sessionStorage.getItem('CheckfrontCart'));sources.push(localStorage.getItem('CheckfrontCart'));}catch(e){}
+  for(var i=0;i<sources.length;i++){
+    var parsed=cfParseCartValue(sources[i]);
+    if(parsed&&parsed.length>0)return parsed;
   }
-  return null;
+  return [];
 }
-function cfGetDateFromSlip(slip){
-  var m=String(slip||'').match(/\.(\d{8})X/);
-  return m?m[1]:fmtApi(document.getElementById('startDate').value);
+function cfGetLastPrimaryCartItem(){
+  var items=cfGetSavedCartItems().filter(function(item){return item&&item.sku!=='shavings'&&item.item_id&&item.slip;});
+  return items.length?items[items.length-1]:null;
 }
-function cfGetEndDateFromSlip(slip){
-  var m=String(slip||'').match(/X(\d+)-qty/);
-  if(!m)return fmtApi(document.getElementById('endDate').value);
-  var d=document.getElementById('startDate').value;
-  if(!d)return fmtApi(document.getElementById('endDate').value);
-  var dt=new Date(d);
-  dt.setDate(dt.getDate()+parseInt(m[1],10));
-  return fmtApi(fmtInput(dt));
-}
-function setMobileIframeRoom(height){
-  if(!isTouch||!document.body.classList.contains('widget-active'))return;
-  var iframe=document.querySelector('#CF_WIDGET_TARGET iframe');
-  if(!iframe)return;
-  var h=height||0;
-  var targetHeight=h>800?Math.max(Math.ceil(h)+1400,3400):Math.max(Math.ceil(h)+900,2200);
-  iframe.style.height=targetHeight+'px';
-  iframe.style.minHeight=targetHeight+'px';
-}
-function sessionCheckout(){
-  if(!sessionActive&&!cfRestoreSavedCart())return;
-  cfSuppressTransientEmptyCart(10000);
-  cfRestoreSavedCart();
-
-  if(isTouch){
-    // Mobile: avoid the fragile /reserve/create iframe path. Re-open a normal product droplet
-    // from the saved cart so droplet-cart can restore the booking, then let the customer tap
-    // Checkfront's native View/checkout controls. This uses the same path that already works.
-    var resumeItem=cfGetPrimaryCartItem();
-    if(!resumeItem||!resumeItem.item_id||!resumeItem.slip)return;
-    document.body.classList.add('widget-active');
-    document.getElementById('widgetSection').classList.add('vis');
-    document.getElementById('widgetTitle').textContent='Resume Your Reservation';
-    document.getElementById('widgetStallLabel').textContent='Your saved booking cart';
-    document.getElementById('widgetFrameHeader').textContent='Returning to your saved booking';
-    document.getElementById('widgetHint').innerHTML='Your cart is saved. Tap <strong>View</strong> in the Checkfront booking banner below to review your reservation, or continue through checkout when ready.';
-    document.getElementById('widgetMsg').style.display='block';
-    document.getElementById('widgetMsg').textContent='Loading your saved booking...';
-    var target=document.getElementById('CF_WIDGET_TARGET');
-    target.innerHTML='';
-    scrollToCheckoutPanel();
-    setTimeout(function(){
-      try{
-        cfRestoreSavedCart();
-        document.getElementById('widgetMsg').style.display='none';
-        new CHECKFRONT.Widget({
-          host:'circle-t-arena.manage.na1.bookingplatform.app',
-          target:'CF_WIDGET_TARGET',
-          item_id:String(resumeItem.item_id),
-          slip:resumeItem.slip,
-          date:cfGetDateFromSlip(resumeItem.slip),
-          end_date:cfGetEndDateFromSlip(resumeItem.slip),
-          provider:'droplet',
-          options:'hidesearch,hidedates'
-        }).render();
-        setTimeout(function(){setMobileIframeRoom(1100);scrollToCheckoutPanel();},700);
-      }catch(err){
-        document.getElementById('widgetMsg').style.display='block';
-        document.getElementById('widgetMsg').innerHTML='Could not load checkout. <a href="'+FALLBACK_URL+'" target="_blank" style="color:var(--gldl);">Complete booking here</a>';
-      }
-    },220);
+function mobileContinueCheckout(){
+  var item=cfGetLastPrimaryCartItem();
+  if(!item){
+    showFlowToast('Your saved cart is not available yet. Choose another spot to continue.',3200);
     return;
   }
-
-  // Desktop: keep the direct cart/review path that has been working.
+  cfSuppressTransientEmptyCart(10000);
+  cfRestoreSavedCart();
+  sessionActive=true;updateSessionBanner();
+  _widgetWasLarge=false;
+  if(isTouch){document.body.classList.add('widget-active');document.getElementById('infoPanel').classList.remove('vis');}
   document.getElementById('widgetSection').classList.add('vis');
-  document.getElementById('widgetTitle').textContent='Review Your Reservation';
-  document.getElementById('widgetStallLabel').textContent='Your saved booking cart';
-  document.getElementById('widgetFrameHeader').textContent='Your booking cart';
-  document.getElementById('widgetHint').innerHTML='Your saved booking is loaded below. Continue through checkout, or use <strong>+ Add to Booking</strong> to return to the map and choose another spot.';
+  document.getElementById('widgetTitle').textContent='Continue Checkout';
+  document.getElementById('widgetStallLabel').textContent='Your saved booking is still active';
+  document.getElementById('widgetFrameHeader').textContent='Resume your booking';
+  document.getElementById('widgetHint').innerHTML='Your cart is saved. Tap <strong>View</strong> in the Checkfront booking banner to review your cart and continue checkout, or use <strong>+ Add to Booking</strong> to return to the map again.';
   document.getElementById('widgetMsg').style.display='block';
-  document.getElementById('widgetMsg').textContent='Loading your saved cart...';
-  var target=document.getElementById('CF_WIDGET_TARGET');
-  target.innerHTML='';
+  document.getElementById('widgetMsg').textContent='Loading your saved booking...';
+  document.getElementById('CF_WIDGET_TARGET').innerHTML='';
   scrollToCheckoutPanel();
   setTimeout(function(){
     try{
-      cfRestoreSavedCart();
       document.getElementById('widgetMsg').style.display='none';
-      var src='https://circle-t-arena.manage.na1.bookingplatform.app/reserve/create/?inline=1&provider=droplet&ssl=1&src='+encodeURIComponent(window.location.origin)+'&'+Date.now();
-      target.innerHTML='<iframe allow="payment" name="checkfront" class="CHECKFRONT_DROPLET" src="'+src+'" frameborder="0" scrolling="no" style="display:block;width:1px;min-width:100%;height:1800px;min-height:900px;overflow:hidden;border:0;background:#fff;"></iframe>';
-      scrollToCheckoutPanel();
+      cfRestoreSavedCart();
+      var slipMatch=String(item.slip).match(/^(\d+)\.(\d{8})X(\d+)/);
+      var widgetDate=slipMatch?slipMatch[2]:fmtApi(document.getElementById('startDate').value);
+      new CHECKFRONT.Widget({
+        host:'circle-t-arena.manage.na1.bookingplatform.app',
+        target:'CF_WIDGET_TARGET',
+        item_id:String(item.item_id),
+        slip:item.slip,
+        date:widgetDate,
+        end_date:fmtApi(document.getElementById('endDate').value),
+        provider:'droplet',
+        options:'hidesearch,hidedates'
+      }).render();
     }catch(err){
       document.getElementById('widgetMsg').style.display='block';
+      document.getElementById('widgetMsg').innerHTML='Could not resume checkout. Choose another spot from the map to continue your saved booking.';
+    }
+  },350);
+}
+function sessionCheckout(){
+  if(isTouch){ mobileContinueCheckout(); return; }
+  cfSuppressTransientEmptyCart(8000);
+  cfRestoreSavedCart();
+  document.getElementById('widgetSection').classList.add('vis');
+  document.getElementById('widgetTitle').textContent='Your Cart';
+  document.getElementById('widgetStallLabel').textContent='Review your items and complete checkout';
+  document.getElementById('widgetFrameHeader').textContent='Your booking cart';
+  document.getElementById('widgetHint').innerHTML='Your saved cart is loaded below. Continue through checkout, or use <strong>+ Add to Booking</strong> to return to the map and choose another spot.';
+  document.getElementById('widgetMsg').style.display='block';
+  document.getElementById('CF_WIDGET_TARGET').innerHTML='';
+  scrollToCheckoutPanel();
+  setTimeout(function(){
+    try{
+      document.getElementById('widgetMsg').style.display='none';
+      cfRestoreSavedCart();
+      new CHECKFRONT.Widget({
+        host:'circle-t-arena.manage.na1.bookingplatform.app',
+        target:'CF_WIDGET_TARGET',
+        provider:'droplet',
+        options:'hidesearch,hidedates'
+      }).render();
+    }catch(err){
       document.getElementById('widgetMsg').innerHTML='Could not load checkout. <a href="'+FALLBACK_URL+'" target="_blank" style="color:var(--gldl);">Complete booking here</a>';
     }
-  },220);
+  },500);
 }
 function sessionClear(){
   cfClearSavedCart();
@@ -1105,7 +1081,6 @@ window.addEventListener('message',function(e){
   var height=e.data;
   var widgetVisible=document.getElementById('widgetSection').classList.contains('vis');
   if(!widgetVisible)return;
-  setMobileIframeRoom(height);
 
   // Mobile cart overview in this account is often around 900-1000px, not >1500px.
   if(height>800)_widgetWasLarge=true;
@@ -1152,7 +1127,6 @@ function launchBooking(){
   setTimeout(function(){try{document.getElementById('widgetMsg').style.display='none';
     cfRestoreSavedCart();
     new CHECKFRONT.Widget({host:'circle-t-arena.manage.na1.bookingplatform.app',target:'CF_WIDGET_TARGET',item_id:String(first.itemId),slip:first.slip,date:fmtApi(document.getElementById('startDate').value),end_date:fmtApi(document.getElementById('endDate').value),provider:'droplet',options:'hidesearch,hidedates'}).render();
-    setTimeout(function(){setMobileIframeRoom(1100);},700);
     if(cart.length>1){document.getElementById('widgetMsg').style.display='block';document.getElementById('widgetMsg').innerHTML='<div style="margin-bottom:10px;color:var(--gldl);font-size:11px;">Booking '+first.label+' first. After completing, book remaining: '+cart.slice(1).map(function(c){return c.label;}).join(', ')+'.</div>';}
   }catch(err){document.getElementById('widgetMsg').style.display='block';document.getElementById('widgetMsg').innerHTML='Could not load reservation form. <a href="'+FALLBACK_URL+'" target="_blank" style="color:var(--gldl);">Book directly here</a>';}},500);
 }
