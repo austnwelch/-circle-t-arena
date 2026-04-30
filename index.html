@@ -224,6 +224,15 @@ body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--tx); 
   .map-panel { border-right:none; padding-bottom:20px; }
   .main { grid-template-columns:1fr; }
   .hub-grid { grid-template-columns:1fr; }
+
+  /* Mobile checkout mode: give Checkfront the screen and keep the stall info drawer out of the way. */
+  body.widget-active { overflow:hidden; }
+  body.widget-active .info-panel { display:none !important; transform:translateY(100%) !important; pointer-events:none !important; }
+  body.widget-active .widget-section.vis { display:block; position:fixed; inset:0; z-index:5000; padding:10px; padding-bottom:max(10px, env(safe-area-inset-bottom)); overflow:auto; -webkit-overflow-scrolling:touch; background:var(--sf2); border-top:none; }
+  body.widget-active .widget-header { position:sticky; top:0; z-index:2; background:var(--sf2); padding:4px 0 10px; margin-bottom:8px; }
+  body.widget-active .widget-frame { min-height:calc(100vh - 76px); display:flex; flex-direction:column; }
+  body.widget-active .widget-wrap { flex:1; padding:8px; }
+  body.widget-active .widget-hint { font-size:13px; line-height:1.35; }
 }
 .err { padding:12px 16px; background:#2a1010; border:1px solid var(--red); border-radius:var(--radius); color:#c06060; font-size:13px; margin:16px 0; }
 
@@ -272,18 +281,6 @@ body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--tx); 
 .btn-session-checkout:hover { background:var(--gldl); }
 .btn-session-continue { background:var(--sf3); color:var(--gldl); border:1px solid var(--bd); }
 .btn-session-continue:hover { border-color:var(--gld); }
-
-
-/* ── TEMP DEBUG: droplet-cart visibility panel ───────────── */
-.cf-debug-panel { position: fixed; left: 8px; right: 8px; bottom: 8px; z-index: 2147483647; background: rgba(12,10,8,.96); color: #f2ead8; border: 1px solid #d4aa44; border-radius: 8px; font-family: JetBrains Mono, monospace; font-size: 11px; max-height: 42vh; overflow: hidden; box-shadow: 0 8px 24px rgba(0,0,0,.45); }
-.cf-debug-panel.collapsed { max-height: 36px; }
-.cf-debug-head { display:flex; align-items:center; justify-content:space-between; gap:8px; padding:8px 10px; background:#282420; border-bottom:1px solid #4a4235; }
-.cf-debug-title { color:#f0cc66; font-weight:700; }
-.cf-debug-actions { display:flex; gap:6px; }
-.cf-debug-btn { background:#322e28; color:#f0cc66; border:1px solid #5e5548; border-radius:4px; padding:4px 6px; font-size:10px; font-family:inherit; }
-.cf-debug-body { padding:8px 10px; overflow:auto; max-height:calc(42vh - 38px); white-space:pre-wrap; word-break:break-word; }
-.cf-debug-panel.collapsed .cf-debug-body { display:none; }
-
 </style>
 </head>
 <body>
@@ -413,7 +410,7 @@ body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--tx); 
 <div class="widget-section" id="widgetSection">
   <div class="widget-header">
     <div><h3 id="widgetTitle">Complete Your Reservation</h3><div class="widget-stall" id="widgetStallLabel"></div></div>
-    <button class="btn-widget-back" onclick="closeWidget()">✕ Close</button>
+    <button class="btn-widget-back" onclick="hideWidgetForMap()">‹ Back to map</button>
   </div>
   <div class="widget-frame">
     <div class="widget-frame-header" id="widgetFrameHeader">Completing reservation...</div>
@@ -483,6 +480,63 @@ var widgetHeightHistory=[];      // track recent heights for transition detectio
 var lastWidgetHeight=0;
 var sessionItemCount=0;          // track items added this session
 
+// ── Droplet cart bridge guard ───────────────────────────────
+// The Checkfront droplet-cart feature exports cart state to the parent page so Safari/mobile
+// can restore it between product-specific droplets. During the + Add to Booking transition,
+// the droplet can briefly emit an empty cart. If we let that overwrite a valid cart, the next
+// droplet has nothing to restore. Keep the last non-empty CheckfrontCart unless we intentionally clear it.
+var cfLastNonEmptyCart=null;
+var cfLastNonEmptyAt=0;
+var cfAllowEmptyCartClearUntil=0;
+var _nativeStorageSetItem=Storage.prototype.setItem;
+var _nativeStorageRemoveItem=Storage.prototype.removeItem;
+function cfIsCheckfrontCartKey(key){return String(key)==='CheckfrontCart';}
+function cfParseCartValue(value){try{var parsed=JSON.parse(value);return Array.isArray(parsed)?parsed:null;}catch(e){return null;}}
+function cfRememberCart(value){var parsed=cfParseCartValue(value);if(parsed&&parsed.length>0){cfLastNonEmptyCart=value;cfLastNonEmptyAt=Date.now();}}
+function cfAllowEmptyCartClear(ms){cfAllowEmptyCartClearUntil=Date.now()+(ms||5000);}
+function cfShouldSuppressEmptyCart(value){
+  if(Date.now()<cfAllowEmptyCartClearUntil)return false;
+  var parsed=cfParseCartValue(value);
+  return parsed&&parsed.length===0&&!!cfLastNonEmptyCart;
+}
+function cfRestoreSavedCart(){
+  var saved=cfLastNonEmptyCart;
+  if(!saved){
+    var fromSession=sessionStorage.getItem('CheckfrontCart');
+    var fromLocal=localStorage.getItem('CheckfrontCart');
+    if(cfParseCartValue(fromSession)&&cfParseCartValue(fromSession).length>0)saved=fromSession;
+    else if(cfParseCartValue(fromLocal)&&cfParseCartValue(fromLocal).length>0)saved=fromLocal;
+  }
+  if(saved&&cfParseCartValue(saved)&&cfParseCartValue(saved).length>0){
+    cfLastNonEmptyCart=saved;cfLastNonEmptyAt=Date.now();
+    _nativeStorageSetItem.call(localStorage,'CheckfrontCart',saved);
+    _nativeStorageSetItem.call(sessionStorage,'CheckfrontCart',saved);
+    return true;
+  }
+  return false;
+}
+function cfClearSavedCart(){
+  cfAllowEmptyCartClear(5000);cfLastNonEmptyCart=null;cfLastNonEmptyAt=0;
+  try{_nativeStorageSetItem.call(localStorage,'CheckfrontCart','[]');_nativeStorageSetItem.call(sessionStorage,'CheckfrontCart','[]');}catch(e){}
+}
+Storage.prototype.setItem=function(key,value){
+  if(cfIsCheckfrontCartKey(key)){
+    if(cfShouldSuppressEmptyCart(value)){
+      _nativeStorageSetItem.call(this,key,cfLastNonEmptyCart);
+      return;
+    }
+    cfRememberCart(value);
+  }
+  return _nativeStorageSetItem.call(this,key,value);
+};
+Storage.prototype.removeItem=function(key){
+  if(cfIsCheckfrontCartKey(key)&&cfLastNonEmptyCart&&Date.now()>=cfAllowEmptyCartClearUntil){
+    _nativeStorageSetItem.call(this,key,cfLastNonEmptyCart);
+    return;
+  }
+  return _nativeStorageRemoveItem.call(this,key);
+};
+
 function today(){var d=new Date();d.setHours(0,0,0,0);return d;}
 function fmtInput(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
 function fmtApi(v){return v.replace(/-/g,'');}
@@ -503,6 +557,7 @@ function onDateChange(){
   document.querySelectorAll('.sc').forEach(function(c){c.classList.remove('available','unavailable','checking','selected','in-cart');});
   clearInfoPanel();closeWidget();updateUrl();clearStaleTimer();
   // Reset session on date change
+  cfClearSavedCart();
   sessionActive=false;sessionItemCount=0;updateSessionBanner();
   var s=document.getElementById('startDate').value,e=document.getElementById('endDate').value;
   if(!s||!e||nightsBetween(s,e)<=0){setProgressLabel('Select dates to check availability',false);setProgressBar(0);renderHubCards();return;}
@@ -823,15 +878,19 @@ function updateSessionBanner(){
   }
 }
 function sessionAddMore(){
+  hideWidgetForMap();
+}
+function hideWidgetForMap(){
   closeWidget();
-  // If we're on the hub, stay there so user can pick an area
-  // If we're in a map view, scroll to the grid
+  clearInfoPanel();
   var mapPanel=document.querySelector('.map-panel');
   if(mapPanel&&document.getElementById('mapView').classList.contains('vis')){
-    mapPanel.scrollIntoView({behavior:'smooth',block:'start'});
+    setTimeout(function(){mapPanel.scrollIntoView({behavior:'smooth',block:'start'});},80);
   }
 }
 function sessionCheckout(){
+  if(isTouch)document.body.classList.add('widget-active');
+  cfRestoreSavedCart();
   document.getElementById('widgetSection').classList.add('vis');
   document.getElementById('widgetTitle').textContent='Your Cart';
   document.getElementById('widgetStallLabel').textContent='Review your items and complete checkout';
@@ -843,6 +902,7 @@ function sessionCheckout(){
   setTimeout(function(){
     try{
       document.getElementById('widgetMsg').style.display='none';
+      cfRestoreSavedCart();
       new CHECKFRONT.Widget({
         host:'circle-t-arena.manage.na1.bookingplatform.app',
         target:'CF_WIDGET_TARGET',
@@ -855,6 +915,7 @@ function sessionCheckout(){
   },500);
 }
 function sessionClear(){
+  cfClearSavedCart();
   sessionActive=false;
   sessionItemCount=0;
   updateSessionBanner();
@@ -864,25 +925,39 @@ function sessionClear(){
 var _widgetWasLarge=false;
 window.addEventListener('message',function(e){
   if(!e.origin||!e.origin.includes('bookingplatform'))return;
-  if(typeof e.data!=='number')return;
 
+  // droplet-cart sends structured cart updates to the parent page. Keep the last non-empty cart
+  // available for restoration and ignore transient empty-cart updates during the add-more transition.
+  if(e.data&&typeof e.data==='object'&&e.data.event==='cartUpdated'){
+    try{
+      if(Array.isArray(e.data.cart)&&e.data.cart.length>0){
+        var serialized=JSON.stringify(e.data.cart);
+        cfRememberCart(serialized);
+        _nativeStorageSetItem.call(localStorage,'CheckfrontCart',serialized);
+        _nativeStorageSetItem.call(sessionStorage,'CheckfrontCart',serialized);
+        sessionActive=true;
+        sessionItemCount=Math.max(sessionItemCount,e.data.cart.filter(function(item){return item&&item.sku!=='shavings';}).length||1);
+        updateSessionBanner();
+      }else if(Array.isArray(e.data.cart)&&e.data.cart.length===0&&cfLastNonEmptyCart){
+        cfRestoreSavedCart();
+      }
+    }catch(err){}
+    return;
+  }
+
+  if(typeof e.data!=='number')return;
   var height=e.data;
   var widgetVisible=document.getElementById('widgetSection').classList.contains('vis');
   if(!widgetVisible)return;
 
-  if(height>1500)_widgetWasLarge=true;
+  // Mobile cart overview in this account is often around 900-1000px, not >1500px.
+  if(height>800)_widgetWasLarge=true;
 
-  // Detect "Add to Booking" transition: was large, now small
-  if(_widgetWasLarge&&height<500&&height>100){
+  // Detect + Add to Booking transition: cart/overview was large, then droplet returns to a small product state.
+  if(_widgetWasLarge&&height<460&&height>100){
     _widgetWasLarge=false;
     updateSessionBanner();
-    setTimeout(function(){
-      closeWidget();
-      var mapPanel=document.querySelector('.map-panel');
-      if(mapPanel&&document.getElementById('mapView').classList.contains('vis')){
-        mapPanel.scrollIntoView({behavior:'smooth',block:'start'});
-      }
-    },600);
+    setTimeout(function(){hideWidgetForMap();},650);
   }
 });
 
@@ -899,6 +974,7 @@ function bookSelected(){
 }
 function launchBooking(){
   if(cart.length===0)return;var first=cart[0],cl=cart.map(function(c){return c.label;}).join(', ');
+  cfRestoreSavedCart();
   sessionActive=true;
   sessionItemCount++;
   updateSessionBanner();
@@ -910,15 +986,21 @@ function launchBooking(){
     hint.innerHTML='You have items in your cart. Click <strong>Book Now</strong> below to add this one too. Use <strong>+ Add to Booking</strong> to keep adding, or continue through the prompts to complete your reservation when ready.';
   }
   document.getElementById('widgetTitle').textContent=sessionItemCount<=1?'Complete Your Reservation':'Add to Your Reservation';
+  if(isTouch){document.body.classList.add('widget-active');document.getElementById('infoPanel').classList.remove('vis');}
   document.getElementById('widgetSection').classList.add('vis');document.getElementById('widgetStallLabel').textContent=cl;
   document.getElementById('widgetFrameHeader').textContent='Adding '+cl+' to your cart';document.getElementById('widgetMsg').style.display='block';document.getElementById('CF_WIDGET_TARGET').innerHTML='';
   setTimeout(function(){document.getElementById('widgetSection').scrollIntoView({behavior:'smooth',block:'start'});},100);
   setTimeout(function(){try{document.getElementById('widgetMsg').style.display='none';
+    cfRestoreSavedCart();
     new CHECKFRONT.Widget({host:'circle-t-arena.manage.na1.bookingplatform.app',target:'CF_WIDGET_TARGET',item_id:String(first.itemId),slip:first.slip,date:fmtApi(document.getElementById('startDate').value),end_date:fmtApi(document.getElementById('endDate').value),provider:'droplet',options:'hidesearch,hidedates'}).render();
     if(cart.length>1){document.getElementById('widgetMsg').style.display='block';document.getElementById('widgetMsg').innerHTML='<div style="margin-bottom:10px;color:var(--gldl);font-size:11px;">Booking '+first.label+' first. After completing, book remaining: '+cart.slice(1).map(function(c){return c.label;}).join(', ')+'.</div>';}
   }catch(err){document.getElementById('widgetMsg').style.display='block';document.getElementById('widgetMsg').innerHTML='Could not load reservation form. <a href="'+FALLBACK_URL+'" target="_blank" style="color:var(--gldl);">Book directly here</a>';}},500);
 }
-function closeWidget(){document.getElementById('widgetSection').classList.remove('vis');document.getElementById('CF_WIDGET_TARGET').innerHTML='';}
+function closeWidget(){
+  document.getElementById('widgetSection').classList.remove('vis');
+  document.getElementById('CF_WIDGET_TARGET').innerHTML='';
+  document.body.classList.remove('widget-active');
+}
 
 // ── INIT ────────────────────────────────────────────────────
 window.addEventListener('load',function(){
@@ -927,120 +1009,5 @@ window.addEventListener('load',function(){
   if(s&&e&&nightsBetween(s,e)>0&&!currentArea)fetchHubAvailability(s,e);
 });
 </script>
-
-
-<script>
-/* TEMP DEBUG: droplet-cart visibility panel
-   Remove after testing. Shows whether Checkfront/droplet-cart is sending cart data
-   to the parent page or writing temporary cart state in parent storage. */
-(function(){
-  var logs=[];
-  var lastStorageSnapshot={local:{},session:{}};
-  function safeStringify(value){
-    try{ return JSON.stringify(value); }
-    catch(e){ return String(value); }
-  }
-  function short(value, max){
-    var s=typeof value==='string'?value:safeStringify(value);
-    max=max||900;
-    return s.length>max?s.slice(0,max)+'…':s;
-  }
-  function importantKey(k){
-    return /checkfront|droplet|cart|booking|reserve|cf|res|sid|checkout/i.test(k||'');
-  }
-  function addLog(type, detail){
-    var entry={time:new Date().toLocaleTimeString(), type:type, detail:detail};
-    logs.push(entry);
-    if(logs.length>80) logs.shift();
-    try{ window.__cfDropletDebugLogs=logs; }catch(e){}
-    render();
-  }
-  function snapshotStorage(area){
-    var store=area==='local'?localStorage:sessionStorage;
-    var out={};
-    try{
-      for(var i=0;i<store.length;i++){
-        var k=store.key(i);
-        if(importantKey(k)) out[k]=short(store.getItem(k),500);
-      }
-    }catch(e){ out.__error=String(e); }
-    return out;
-  }
-  function compareStorage(){
-    ['local','session'].forEach(function(area){
-      var now=snapshotStorage(area), prev=lastStorageSnapshot[area]||{};
-      Object.keys(now).forEach(function(k){
-        if(prev[k]!==now[k]) addLog(area+'Storage', k+' = '+now[k]);
-      });
-      Object.keys(prev).forEach(function(k){
-        if(!(k in now)) addLog(area+'Storage removed', k);
-      });
-      lastStorageSnapshot[area]=now;
-    });
-  }
-  function makePanel(){
-    if(document.getElementById('cfDebugPanel'))return;
-    var panel=document.createElement('div');
-    panel.id='cfDebugPanel';
-    panel.className='cf-debug-panel collapsed';
-    panel.innerHTML='<div class="cf-debug-head"><div class="cf-debug-title">droplet-cart debug</div><div class="cf-debug-actions"><button class="cf-debug-btn" id="cfDbgCopy">Copy</button><button class="cf-debug-btn" id="cfDbgClear">Clear</button><button class="cf-debug-btn" id="cfDbgToggle">Open</button></div></div><div class="cf-debug-body" id="cfDebugBody">Waiting for messages/storage…</div>';
-    document.body.appendChild(panel);
-    document.getElementById('cfDbgToggle').onclick=function(){
-      panel.classList.toggle('collapsed');
-      this.textContent=panel.classList.contains('collapsed')?'Open':'Close';
-    };
-    document.getElementById('cfDbgClear').onclick=function(){logs=[];render();};
-    document.getElementById('cfDbgCopy').onclick=function(){
-      var txt=JSON.stringify(logs,null,2);
-      if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(txt).then(function(){addLog('debug','Copied logs');});}
-      else { window.prompt('Copy logs',txt); }
-    };
-  }
-  function render(){
-    makePanel();
-    var body=document.getElementById('cfDebugBody');
-    if(!body)return;
-    body.textContent=logs.map(function(l){return '['+l.time+'] '+l.type+': '+l.detail;}).join('\n\n') || 'Waiting for messages/storage…';
-  }
-  // Patch storage writes so we can see if the droplet/cart flag stores anything in parent page state.
-  ['localStorage','sessionStorage'].forEach(function(name){
-    try{
-      var proto=Storage.prototype;
-      if(proto['__cfDbgPatched_'+name])return;
-      var origSet=proto.setItem;
-      proto.setItem=function(k,v){
-        var r=origSet.apply(this,arguments);
-        if(importantKey(k)) addLog(name+'.setItem', k+' = '+short(v,700));
-        return r;
-      };
-      proto['__cfDbgPatched_'+name]=true;
-    }catch(e){ addLog('debug','Could not patch '+name+': '+e.message); }
-  });
-  window.addEventListener('message',function(e){
-    var origin=e.origin || '(no origin)';
-    var data=e.data;
-    var text=short(data,1200);
-    var interesting=/bookingplatform|checkfront/i.test(origin) || /cart|droplet|booking|reserve|sid|res|checkout/i.test(text);
-    if(interesting){
-      addLog('postMessage from '+origin, text);
-    }
-  });
-  window.dumpCfDropletDebug=function(){return logs;};
-  window.copyCfDropletDebug=function(){
-    var txt=JSON.stringify(logs,null,2);
-    if(navigator.clipboard&&navigator.clipboard.writeText)return navigator.clipboard.writeText(txt);
-    console.log(txt);
-  };
-  makePanel();
-  addLog('debug','Panel loaded on '+location.href);
-  compareStorage();
-  setInterval(compareStorage,1000);
-  setInterval(function(){
-    var frames=[].slice.call(document.querySelectorAll('iframe')).map(function(f){return f.src||'(no src)';}).join(' | ');
-    if(frames) addLog('iframes', short(frames,800));
-  },5000);
-})();
-</script>
-
 </body>
 </html>
