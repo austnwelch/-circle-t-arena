@@ -272,6 +272,18 @@ body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--tx); 
 .btn-session-checkout:hover { background:var(--gldl); }
 .btn-session-continue { background:var(--sf3); color:var(--gldl); border:1px solid var(--bd); }
 .btn-session-continue:hover { border-color:var(--gld); }
+
+
+/* ── TEMP DEBUG: droplet-cart visibility panel ───────────── */
+.cf-debug-panel { position: fixed; left: 8px; right: 8px; bottom: 8px; z-index: 2147483647; background: rgba(12,10,8,.96); color: #f2ead8; border: 1px solid #d4aa44; border-radius: 8px; font-family: JetBrains Mono, monospace; font-size: 11px; max-height: 42vh; overflow: hidden; box-shadow: 0 8px 24px rgba(0,0,0,.45); }
+.cf-debug-panel.collapsed { max-height: 36px; }
+.cf-debug-head { display:flex; align-items:center; justify-content:space-between; gap:8px; padding:8px 10px; background:#282420; border-bottom:1px solid #4a4235; }
+.cf-debug-title { color:#f0cc66; font-weight:700; }
+.cf-debug-actions { display:flex; gap:6px; }
+.cf-debug-btn { background:#322e28; color:#f0cc66; border:1px solid #5e5548; border-radius:4px; padding:4px 6px; font-size:10px; font-family:inherit; }
+.cf-debug-body { padding:8px 10px; overflow:auto; max-height:calc(42vh - 38px); white-space:pre-wrap; word-break:break-word; }
+.cf-debug-panel.collapsed .cf-debug-body { display:none; }
+
 </style>
 </head>
 <body>
@@ -915,5 +927,120 @@ window.addEventListener('load',function(){
   if(s&&e&&nightsBetween(s,e)>0&&!currentArea)fetchHubAvailability(s,e);
 });
 </script>
+
+
+<script>
+/* TEMP DEBUG: droplet-cart visibility panel
+   Remove after testing. Shows whether Checkfront/droplet-cart is sending cart data
+   to the parent page or writing temporary cart state in parent storage. */
+(function(){
+  var logs=[];
+  var lastStorageSnapshot={local:{},session:{}};
+  function safeStringify(value){
+    try{ return JSON.stringify(value); }
+    catch(e){ return String(value); }
+  }
+  function short(value, max){
+    var s=typeof value==='string'?value:safeStringify(value);
+    max=max||900;
+    return s.length>max?s.slice(0,max)+'…':s;
+  }
+  function importantKey(k){
+    return /checkfront|droplet|cart|booking|reserve|cf|res|sid|checkout/i.test(k||'');
+  }
+  function addLog(type, detail){
+    var entry={time:new Date().toLocaleTimeString(), type:type, detail:detail};
+    logs.push(entry);
+    if(logs.length>80) logs.shift();
+    try{ window.__cfDropletDebugLogs=logs; }catch(e){}
+    render();
+  }
+  function snapshotStorage(area){
+    var store=area==='local'?localStorage:sessionStorage;
+    var out={};
+    try{
+      for(var i=0;i<store.length;i++){
+        var k=store.key(i);
+        if(importantKey(k)) out[k]=short(store.getItem(k),500);
+      }
+    }catch(e){ out.__error=String(e); }
+    return out;
+  }
+  function compareStorage(){
+    ['local','session'].forEach(function(area){
+      var now=snapshotStorage(area), prev=lastStorageSnapshot[area]||{};
+      Object.keys(now).forEach(function(k){
+        if(prev[k]!==now[k]) addLog(area+'Storage', k+' = '+now[k]);
+      });
+      Object.keys(prev).forEach(function(k){
+        if(!(k in now)) addLog(area+'Storage removed', k);
+      });
+      lastStorageSnapshot[area]=now;
+    });
+  }
+  function makePanel(){
+    if(document.getElementById('cfDebugPanel'))return;
+    var panel=document.createElement('div');
+    panel.id='cfDebugPanel';
+    panel.className='cf-debug-panel collapsed';
+    panel.innerHTML='<div class="cf-debug-head"><div class="cf-debug-title">droplet-cart debug</div><div class="cf-debug-actions"><button class="cf-debug-btn" id="cfDbgCopy">Copy</button><button class="cf-debug-btn" id="cfDbgClear">Clear</button><button class="cf-debug-btn" id="cfDbgToggle">Open</button></div></div><div class="cf-debug-body" id="cfDebugBody">Waiting for messages/storage…</div>';
+    document.body.appendChild(panel);
+    document.getElementById('cfDbgToggle').onclick=function(){
+      panel.classList.toggle('collapsed');
+      this.textContent=panel.classList.contains('collapsed')?'Open':'Close';
+    };
+    document.getElementById('cfDbgClear').onclick=function(){logs=[];render();};
+    document.getElementById('cfDbgCopy').onclick=function(){
+      var txt=JSON.stringify(logs,null,2);
+      if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(txt).then(function(){addLog('debug','Copied logs');});}
+      else { window.prompt('Copy logs',txt); }
+    };
+  }
+  function render(){
+    makePanel();
+    var body=document.getElementById('cfDebugBody');
+    if(!body)return;
+    body.textContent=logs.map(function(l){return '['+l.time+'] '+l.type+': '+l.detail;}).join('\n\n') || 'Waiting for messages/storage…';
+  }
+  // Patch storage writes so we can see if the droplet/cart flag stores anything in parent page state.
+  ['localStorage','sessionStorage'].forEach(function(name){
+    try{
+      var proto=Storage.prototype;
+      if(proto['__cfDbgPatched_'+name])return;
+      var origSet=proto.setItem;
+      proto.setItem=function(k,v){
+        var r=origSet.apply(this,arguments);
+        if(importantKey(k)) addLog(name+'.setItem', k+' = '+short(v,700));
+        return r;
+      };
+      proto['__cfDbgPatched_'+name]=true;
+    }catch(e){ addLog('debug','Could not patch '+name+': '+e.message); }
+  });
+  window.addEventListener('message',function(e){
+    var origin=e.origin || '(no origin)';
+    var data=e.data;
+    var text=short(data,1200);
+    var interesting=/bookingplatform|checkfront/i.test(origin) || /cart|droplet|booking|reserve|sid|res|checkout/i.test(text);
+    if(interesting){
+      addLog('postMessage from '+origin, text);
+    }
+  });
+  window.dumpCfDropletDebug=function(){return logs;};
+  window.copyCfDropletDebug=function(){
+    var txt=JSON.stringify(logs,null,2);
+    if(navigator.clipboard&&navigator.clipboard.writeText)return navigator.clipboard.writeText(txt);
+    console.log(txt);
+  };
+  makePanel();
+  addLog('debug','Panel loaded on '+location.href);
+  compareStorage();
+  setInterval(compareStorage,1000);
+  setInterval(function(){
+    var frames=[].slice.call(document.querySelectorAll('iframe')).map(function(f){return f.src||'(no src)';}).join(' | ');
+    if(frames) addLog('iframes', short(frames,800));
+  },5000);
+})();
+</script>
+
 </body>
 </html>
