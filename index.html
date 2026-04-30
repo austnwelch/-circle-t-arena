@@ -313,6 +313,47 @@ body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--tx); 
 .btn-session-checkout:hover { background:var(--gldl); }
 .btn-session-continue { background:var(--sf3); color:var(--gldl); border:1px solid var(--bd); }
 .btn-session-continue:hover { border-color:var(--gld); }
+
+
+/* ── Mobile preserved checkout dock: keep the live Checkfront iframe mounted, but collapse it to a small reopen tab. */
+.mobile-preserved-dock { display:none; }
+@media(max-width:900px){
+  .mobile-checkout-bar,
+  .mobile-checkout-bar.vis { display:none !important; }
+  body.has-mobile-checkout-bar .map-panel { padding-bottom:20px; }
+
+  body.widget-active { overflow:auto !important; }
+  body.widget-active .hdr,
+  body.widget-active .datebar,
+  body.widget-active .progress-wrap,
+  body.widget-active .fallback-banner,
+  body.widget-active .map-view,
+  body.widget-active .hub,
+  body.widget-active .legend,
+  body.widget-active .info-panel,
+  body.widget-active .session-banner,
+  body.widget-active .mobile-cart-fab,
+  body.widget-active .mobile-checkout-bar { display:none !important; }
+  body.widget-active .widget-section.vis:not(.widget-collapsed) { display:block !important; position:relative !important; inset:auto !important; z-index:5000; min-height:100vh; padding:0 !important; overflow:visible !important; background:var(--sf2); border-top:none; }
+  body.widget-active .widget-section.vis:not(.widget-collapsed) .widget-header { position:sticky; top:0; z-index:5; background:var(--sf2); padding:12px 14px; margin-bottom:0; align-items:flex-start; border-bottom:1px solid var(--bd); }
+  body.widget-active .widget-section.vis:not(.widget-collapsed) .widget-frame { display:block; overflow:visible; border-radius:0; border-left:none; border-right:none; border-bottom:none; }
+  body.widget-active .widget-section.vis:not(.widget-collapsed) .widget-wrap { padding:0; min-height:72vh; overflow:visible; }
+  body.widget-active .widget-section.vis:not(.widget-collapsed) .widget-hint { font-size:14px; line-height:1.4; padding:12px 14px; }
+  body.widget-active .widget-section.vis:not(.widget-collapsed) #CF_WIDGET_TARGET iframe { display:block !important; width:1px !important; min-width:100% !important; min-height:78vh; }
+
+  .widget-section.widget-collapsed { display:block !important; position:fixed !important; left:0; right:0; bottom:0; z-index:3500; padding:0 !important; border-top:2px solid var(--gld); background:var(--sf); box-shadow:0 -8px 28px rgba(0,0,0,0.42); }
+  .widget-section.widget-collapsed .mobile-preserved-dock { display:flex; align-items:center; justify-content:space-between; gap:10px; width:100%; min-height:58px; padding:10px 14px; padding-bottom:max(10px, env(safe-area-inset-bottom)); background:var(--sf); color:var(--tx); border:0; font-family:'DM Sans',sans-serif; text-align:left; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+  .widget-section.widget-collapsed .mobile-preserved-dock-main { display:flex; flex-direction:column; min-width:0; }
+  .widget-section.widget-collapsed .mobile-preserved-dock-title { font-size:13px; font-weight:800; color:var(--grnl); display:flex; align-items:center; gap:7px; }
+  .widget-section.widget-collapsed .mobile-preserved-dock-title::before { content:''; width:8px; height:8px; border-radius:50%; background:var(--grnl); flex-shrink:0; }
+  .widget-section.widget-collapsed .mobile-preserved-dock-sub { margin-top:2px; font-size:11px; color:var(--txd); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .widget-section.widget-collapsed .mobile-preserved-dock-action { flex-shrink:0; padding:8px 12px; border-radius:999px; background:var(--gld); color:var(--bg); font-size:12px; font-weight:900; }
+  .widget-section.widget-collapsed .widget-header,
+  .widget-section.widget-collapsed .widget-frame { display:block !important; height:1px !important; max-height:1px !important; min-height:1px !important; overflow:hidden !important; opacity:0 !important; pointer-events:none !important; padding:0 !important; margin:0 !important; border:0 !important; }
+  .widget-section.widget-collapsed #CF_WIDGET_TARGET iframe { height:1px !important; min-height:1px !important; }
+  body.has-collapsed-checkout .map-panel { padding-bottom:88px; }
+}
+
 </style>
 </head>
 <body>
@@ -449,6 +490,10 @@ body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--tx); 
 </div>
 
 <div class="widget-section" id="widgetSection">
+  <button class="mobile-preserved-dock" id="mobilePreservedDock" onclick="expandPreservedCheckout()" type="button" aria-label="Reopen checkout">
+    <span class="mobile-preserved-dock-main"><span class="mobile-preserved-dock-title">Booking in progress</span><span class="mobile-preserved-dock-sub" id="mobilePreservedDockSub">Cart saved. Tap to reopen checkout.</span></span>
+    <span class="mobile-preserved-dock-action">Reopen</span>
+  </button>
   <div class="widget-header">
     <div><h3 id="widgetTitle">Complete Your Reservation</h3><div class="widget-stall" id="widgetStallLabel"></div></div>
     <button class="btn-widget-back" onclick="hideWidgetForMap()">‹ Back to map</button>
@@ -846,7 +891,7 @@ function showInfoPanel(label){
   document.getElementById('iAvailDetails').style.display='none';document.getElementById('btnAddCart').disabled=true;
 }
 function clearInfoPanel(){document.getElementById('infoEmpty').style.display='flex';document.getElementById('infoContent').classList.remove('vis');if(isTouch)document.getElementById('infoPanel').classList.remove('vis');selectedCell=null;selectedLabel=null;}
-function clearSelection(){if(selectedCell){selectedCell.classList.remove('selected');selectedCell=null;}selectedLabel=null;clearInfoPanel();closeWidget();updateUrl();}
+function clearSelection(){if(selectedCell){selectedCell.classList.remove('selected');selectedCell=null;}selectedLabel=null;clearInfoPanel();if(!(isTouch&&sessionActive&&document.getElementById('widgetSection').classList.contains('widget-collapsed'))){closeWidget();}updateUrl();}
 
 async function fetchStallDetail(itemId,label,cell,start,end){
   if(availCache[itemId]){renderStallDetail(availCache[itemId],itemId,label,cell,start,end);return;}
@@ -944,18 +989,48 @@ function updateSessionBanner(){
   if(sessionActive){
     banner.classList.add('vis');
     document.getElementById('sessionBannerText').textContent='Booking in progress';
-    if(bar){bar.classList.add('vis');document.body.classList.add('has-mobile-checkout-bar');}
+    if(bar){bar.classList.remove('vis');document.body.classList.remove('has-mobile-checkout-bar');}
   }else{
     banner.classList.remove('vis');
     if(bar)bar.classList.remove('vis');
     document.body.classList.remove('has-mobile-checkout-bar');
+    document.body.classList.remove('has-collapsed-checkout');
+    var ws=document.getElementById('widgetSection'); if(ws)ws.classList.remove('widget-collapsed');
   }
 }
 function sessionAddMore(){
   hideWidgetForMap();
 }
+function collapseWidgetForMap(){
+  var ws=document.getElementById('widgetSection');
+  var iframe=document.querySelector('#CF_WIDGET_TARGET iframe');
+  if(!ws||!iframe){closeWidget();return;}
+  ws.classList.add('vis','widget-collapsed');
+  document.body.classList.remove('widget-active');
+  document.body.classList.add('has-collapsed-checkout');
+  var dock=document.getElementById('mobilePreservedDockSub');
+  if(dock) dock.textContent='Cart saved. Tap to reopen checkout.';
+}
+function expandPreservedCheckout(){
+  var ws=document.getElementById('widgetSection');
+  var iframe=document.querySelector('#CF_WIDGET_TARGET iframe');
+  if(!ws||!iframe){
+    if(typeof mobileContinueCheckout==='function') mobileContinueCheckout();
+    return;
+  }
+  ws.classList.remove('widget-collapsed');
+  ws.classList.add('vis');
+  document.body.classList.remove('has-collapsed-checkout');
+  document.body.classList.add('widget-active');
+  var panel=document.getElementById('infoPanel'); if(panel)panel.classList.remove('vis');
+  scrollToCheckoutPanel();
+}
 function hideWidgetForMap(){
-  closeWidget();
+  if(isTouch&&sessionActive&&document.querySelector('#CF_WIDGET_TARGET iframe')){
+    collapseWidgetForMap();
+  }else{
+    closeWidget();
+  }
   clearInfoPanel();
   var mapPanel=document.querySelector('.map-panel');
   if(mapPanel&&document.getElementById('mapView').classList.contains('vis')){
@@ -987,6 +1062,7 @@ function mobileContinueCheckout(){
   sessionActive=true;updateSessionBanner();
   _widgetWasLarge=false;
   if(isTouch){document.body.classList.add('widget-active');document.getElementById('infoPanel').classList.remove('vis');}
+  document.getElementById('widgetSection').classList.remove('widget-collapsed');
   document.getElementById('widgetSection').classList.add('vis');
   document.getElementById('widgetTitle').textContent='Continue Checkout';
   document.getElementById('widgetStallLabel').textContent='Your saved booking is still active';
@@ -1120,7 +1196,8 @@ function launchBooking(){
     hint.innerHTML='Your previous selections are saved. Tap <strong>Book Now</strong> below to add this spot to the same reservation, then continue checkout or use <strong>+ Add to Booking</strong> to choose another spot.';
   }
   document.getElementById('widgetTitle').textContent=sessionItemCount<=1?'Complete Your Reservation':'Add to Your Reservation';
-  if(isTouch){document.body.classList.add('widget-active');document.getElementById('infoPanel').classList.remove('vis');}
+  if(isTouch){document.body.classList.add('widget-active');document.body.classList.remove('has-collapsed-checkout');document.getElementById('infoPanel').classList.remove('vis');}
+  document.getElementById('widgetSection').classList.remove('widget-collapsed');
   document.getElementById('widgetSection').classList.add('vis');document.getElementById('widgetStallLabel').textContent=cl;
   document.getElementById('widgetFrameHeader').textContent='Adding '+cl+' to your cart';document.getElementById('widgetMsg').style.display='block';document.getElementById('CF_WIDGET_TARGET').innerHTML='';
   scrollToCheckoutPanel();
@@ -1132,9 +1209,10 @@ function launchBooking(){
 }
 function closeWidget(){
   var tr=document.getElementById('checkoutTransition'); if(tr)tr.classList.remove('vis');
-  document.getElementById('widgetSection').classList.remove('vis');
+  var ws=document.getElementById('widgetSection');
+  if(ws)ws.classList.remove('vis','widget-collapsed');
   document.getElementById('CF_WIDGET_TARGET').innerHTML='';
-  document.body.classList.remove('widget-active');
+  document.body.classList.remove('widget-active','has-collapsed-checkout');
 }
 
 // ── INIT ────────────────────────────────────────────────────
