@@ -224,6 +224,7 @@ body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--tx); 
   .map-panel { border-right:none; padding-bottom:20px; }
   .main { grid-template-columns:1fr; }
   .hub-grid { grid-template-columns:1fr; }
+  .session-banner { display:none !important; }
 
   /* Mobile checkout mode: give Checkfront the screen and keep the stall info drawer out of the way. */
   body.widget-active { overflow:hidden; }
@@ -231,9 +232,23 @@ body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--tx); 
   body.widget-active .widget-section.vis { display:block; position:fixed; inset:0; z-index:5000; padding:10px; padding-bottom:max(10px, env(safe-area-inset-bottom)); overflow:auto; -webkit-overflow-scrolling:touch; background:var(--sf2); border-top:none; }
   body.widget-active .widget-header { position:sticky; top:0; z-index:2; background:var(--sf2); padding:4px 0 10px; margin-bottom:8px; }
   body.widget-active .widget-frame { min-height:calc(100vh - 76px); display:flex; flex-direction:column; }
+  body.widget-active .session-banner { display:none !important; }
+  body.widget-active .widget-section.vis { padding-top:max(14px, env(safe-area-inset-top)); }
   body.widget-active .widget-wrap { flex:1; padding:8px; }
-  body.widget-active .widget-hint { font-size:13px; line-height:1.35; }
+  body.widget-active .widget-hint { font-size:14px; line-height:1.4; padding:12px 14px; }
+  body.widget-active .widget-header { align-items:flex-start; }
+  body.widget-active .widget-header h3 { font-size:21px; line-height:1.05; }
+  body.widget-active .widget-stall { font-size:13px; }
+  body.widget-active .btn-widget-back { font-size:15px; padding:10px 14px; }
 }
+.flow-toast { display:none; position:fixed; left:16px; right:16px; bottom:max(18px, env(safe-area-inset-bottom)); z-index:7000; padding:13px 16px; background:var(--sf); border:1px solid var(--gld); border-radius:8px; color:var(--gldl); font-size:14px; font-weight:700; box-shadow:0 8px 26px rgba(0,0,0,0.35); text-align:center; }
+.flow-toast.vis { display:block; animation:toastIn 0.18s ease-out; }
+@keyframes toastIn { from{opacity:0; transform:translateY(8px)} to{opacity:1; transform:translateY(0)} }
+.checkout-transition { display:none; position:fixed; inset:0; z-index:6500; background:rgba(19,17,16,0.82); backdrop-filter:blur(2px); -webkit-backdrop-filter:blur(2px); align-items:center; justify-content:center; padding:24px; text-align:center; }
+.checkout-transition.vis { display:flex; }
+.checkout-transition-card { background:var(--sf); border:1px solid var(--gld); border-radius:10px; padding:20px 18px; max-width:340px; box-shadow:0 12px 32px rgba(0,0,0,0.45); }
+.checkout-transition-card h4 { font-family:'Playfair Display',serif; font-size:24px; margin-bottom:8px; color:var(--tx); }
+.checkout-transition-card p { color:var(--txd); font-size:15px; line-height:1.45; }
 .err { padding:12px 16px; background:#2a1010; border:1px solid var(--red); border-radius:var(--radius); color:#c06060; font-size:13px; margin:16px 0; }
 
 /* ── Landmark frame (wraps around grid, doesn't affect grid layout) ── */
@@ -414,10 +429,18 @@ body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--tx); 
   </div>
   <div class="widget-frame">
     <div class="widget-frame-header" id="widgetFrameHeader">Completing reservation...</div>
-    <div class="widget-hint" id="widgetHint">Click <strong>Book Now</strong> below to add this item to your cart. After confirming your dates, use <strong>+ Add to Booking</strong> to keep adding, or continue through the prompts to complete your reservation.</div>
+    <div class="widget-hint" id="widgetHint">Tap <strong>Book Now</strong> below to add this spot. After it is added, use <strong>+ Add to Booking</strong> to return to the map and choose another spot, or continue through checkout when finished.</div>
     <div class="widget-wrap"><div class="widget-loading" id="widgetMsg">Loading reservation form...</div><div id="CF_WIDGET_TARGET"></div></div>
   </div>
 </div>
+
+<div class="checkout-transition" id="checkoutTransition" aria-live="polite">
+  <div class="checkout-transition-card">
+    <h4>Cart saved</h4>
+    <p>Returning you to the map so you can choose another spot.</p>
+  </div>
+</div>
+<div class="flow-toast" id="flowToast" aria-live="polite"></div>
 
 <div class="legend">
   <div class="li"><div class="lw neu"></div> Not checked</div>
@@ -866,6 +889,24 @@ function updateCartUI(){
   var txt=cart.length+' spot'+(cart.length!==1?'s':'')+' selected';if(all&&tc>0)txt+=' \u00b7 Est. total: $'+tc.toFixed(2);count.textContent=txt;
 }
 
+function showFlowToast(message,duration){
+  var t=document.getElementById('flowToast');
+  if(!t)return;
+  t.textContent=message;
+  t.classList.add('vis');
+  clearTimeout(showFlowToast._timer);
+  showFlowToast._timer=setTimeout(function(){t.classList.remove('vis');},duration||2600);
+}
+function showCheckoutTransitionThenReturn(){
+  var el=document.getElementById('checkoutTransition');
+  if(el)el.classList.add('vis');
+  setTimeout(function(){
+    if(el)el.classList.remove('vis');
+    hideWidgetForMap();
+    showFlowToast('Your cart is still saved. Choose another spot when ready.',3200);
+  },850);
+}
+
 // ── SESSION BANNER (NEW: multi-stall flow) ──────────────────
 function updateSessionBanner(){
   var banner=document.getElementById('sessionBanner');
@@ -895,10 +936,10 @@ function sessionCheckout(){
   document.getElementById('widgetTitle').textContent='Your Cart';
   document.getElementById('widgetStallLabel').textContent='Review your items and complete checkout';
   document.getElementById('widgetFrameHeader').textContent='Your booking cart';
-  document.getElementById('widgetHint').innerHTML='Use <strong>+ Add to Booking</strong> to add more items, or continue through the prompts below to enter your details and complete your reservation.';
+  document.getElementById('widgetHint').innerHTML='Your saved cart is loaded below. Continue through checkout, or use <strong>+ Add to Booking</strong> to return to the map and choose another spot.';
   document.getElementById('widgetMsg').style.display='block';
   document.getElementById('CF_WIDGET_TARGET').innerHTML='';
-  setTimeout(function(){document.getElementById('widgetSection').scrollIntoView({behavior:'smooth',block:'start'});},100);
+  setTimeout(function(){var ws=document.getElementById('widgetSection'); if(ws)ws.scrollTop=0; window.scrollTo(0,0);},100);
   setTimeout(function(){
     try{
       document.getElementById('widgetMsg').style.display='none';
@@ -957,7 +998,7 @@ window.addEventListener('message',function(e){
   if(_widgetWasLarge&&height<460&&height>100){
     _widgetWasLarge=false;
     updateSessionBanner();
-    setTimeout(function(){hideWidgetForMap();},650);
+    showCheckoutTransitionThenReturn();
   }
 });
 
@@ -981,15 +1022,15 @@ function launchBooking(){
   _widgetWasLarge=false;
   var hint=document.getElementById('widgetHint');
   if(sessionItemCount<=1){
-    hint.innerHTML='Click <strong>Book Now</strong> below to add this item to your cart. After confirming your dates, use <strong>+ Add to Booking</strong> to keep adding, or continue through the prompts to enter your details and complete your reservation.';
+    hint.innerHTML='Tap <strong>Book Now</strong> below to add this spot. After it is added, use <strong>+ Add to Booking</strong> to return to the map and choose another spot, or continue through checkout when finished.';
   }else{
-    hint.innerHTML='You have items in your cart. Click <strong>Book Now</strong> below to add this one too. Use <strong>+ Add to Booking</strong> to keep adding, or continue through the prompts to complete your reservation when ready.';
+    hint.innerHTML='Your previous selections are saved. Tap <strong>Book Now</strong> below to add this spot to the same reservation, then continue checkout or use <strong>+ Add to Booking</strong> to choose another spot.';
   }
   document.getElementById('widgetTitle').textContent=sessionItemCount<=1?'Complete Your Reservation':'Add to Your Reservation';
   if(isTouch){document.body.classList.add('widget-active');document.getElementById('infoPanel').classList.remove('vis');}
   document.getElementById('widgetSection').classList.add('vis');document.getElementById('widgetStallLabel').textContent=cl;
   document.getElementById('widgetFrameHeader').textContent='Adding '+cl+' to your cart';document.getElementById('widgetMsg').style.display='block';document.getElementById('CF_WIDGET_TARGET').innerHTML='';
-  setTimeout(function(){document.getElementById('widgetSection').scrollIntoView({behavior:'smooth',block:'start'});},100);
+  setTimeout(function(){var ws=document.getElementById('widgetSection'); if(ws)ws.scrollTop=0; window.scrollTo(0,0);},100);
   setTimeout(function(){try{document.getElementById('widgetMsg').style.display='none';
     cfRestoreSavedCart();
     new CHECKFRONT.Widget({host:'circle-t-arena.manage.na1.bookingplatform.app',target:'CF_WIDGET_TARGET',item_id:String(first.itemId),slip:first.slip,date:fmtApi(document.getElementById('startDate').value),end_date:fmtApi(document.getElementById('endDate').value),provider:'droplet',options:'hidesearch,hidedates'}).render();
@@ -997,6 +1038,7 @@ function launchBooking(){
   }catch(err){document.getElementById('widgetMsg').style.display='block';document.getElementById('widgetMsg').innerHTML='Could not load reservation form. <a href="'+FALLBACK_URL+'" target="_blank" style="color:var(--gldl);">Book directly here</a>';}},500);
 }
 function closeWidget(){
+  var tr=document.getElementById('checkoutTransition'); if(tr)tr.classList.remove('vis');
   document.getElementById('widgetSection').classList.remove('vis');
   document.getElementById('CF_WIDGET_TARGET').innerHTML='';
   document.body.classList.remove('widget-active');
