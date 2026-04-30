@@ -82,8 +82,14 @@ body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--tx); 
 
 /* Hub */
 .hub { padding:20px; max-width:1100px; margin:0 auto; }
-.hub-title { font-family:'Playfair Display',serif; font-size:24px; font-weight:700; margin-bottom:6px; }
+.hub-title-row { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:6px; }
+.hub-title { font-family:'Playfair Display',serif; font-size:24px; font-weight:700; margin-bottom:0; }
+.hub-title-row .btn-propmap { flex-shrink:0; }
 .hub-subtitle { font-size:13px; color:var(--txd); margin-bottom:20px; }
+(max-width:480px){
+  .hub-title-row { align-items:flex-start; }
+  .hub-title { font-size:22px; }
+}
 .hub-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(300px, 1fr)); gap:14px; }
 .area-card { background:var(--sf); border:1px solid var(--bd); border-radius:8px; padding:18px 20px; cursor:pointer; transition:border-color 0.2s, transform 0.15s, box-shadow 0.2s; position:relative; overflow:hidden; }
 .area-card:hover { border-color:var(--gld); transform:translateY(-2px); box-shadow:0 8px 24px rgba(0,0,0,0.3); }
@@ -433,7 +439,13 @@ body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--tx); 
 
 <!-- HUB VIEW -->
 <div class="hub" id="hubView">
-  <div class="hub-title">Choose Your Area</div>
+  <div class="hub-title-row">
+    <div class="hub-title">Choose Your Area</div>
+    <button class="btn-propmap" onclick="openPropertyMap()" aria-label="View property map">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
+      <span class="propmap-label">Property Map</span>
+    </button>
+  </div>
   <div class="hub-subtitle">Select dates above, then pick an area to view the interactive map and reserve.</div>
   <div class="hub-grid" id="hubGrid"></div>
 </div>
