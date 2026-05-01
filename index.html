@@ -86,7 +86,7 @@ body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--tx); 
 .hub-title { font-family:'Playfair Display',serif; font-size:24px; font-weight:700; margin-bottom:0; }
 .hub-title-row .btn-propmap { flex-shrink:0; }
 .hub-subtitle { font-size:13px; color:var(--txd); margin-bottom:20px; }
-@media(max-width:480px){
+(max-width:480px){
   .hub-title-row { align-items:flex-start; }
   .hub-title { font-size:22px; }
 }
@@ -360,50 +360,6 @@ body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--tx); 
   body.has-collapsed-checkout .map-panel { padding-bottom:88px; }
 }
 
-
-
-/* ── Visual polish pass: copy/typography only, no flow changes ── */
-.brand-text p { display:none; }
-.badge { background:transparent; border-color:rgba(212,170,68,0.45); color:var(--txd); font-size:9px; padding:3px 9px; letter-spacing:0.05em; }
-.hub { padding-top:26px; }
-.hub-subtitle { font-size:14px; line-height:1.5; max-width:560px; color:var(--txd); }
-.area-card { background:linear-gradient(180deg, rgba(40,36,32,0.88), rgba(30,27,22,0.98)); border-color:rgba(212,170,68,0.16); box-shadow:0 1px 0 rgba(255,255,255,0.025) inset; }
-.area-card:hover { box-shadow:0 10px 28px rgba(0,0,0,0.24); }
-.area-card .ac-name, .map-title, .stall-id, .widget-header h3, .price-amount { font-family:'DM Sans',sans-serif; letter-spacing:-0.02em; }
-.area-card .ac-name { font-size:18px; font-weight:700; }
-.area-card .ac-desc { font-size:13px; line-height:1.45; color:rgba(191,180,154,0.9); }
-.ac-avail-ok, .ac-avail-low, .ac-avail-pending { font-family:'DM Sans',sans-serif; font-size:13px; font-weight:650; }
-.ac-bar { height:3px; opacity:0.85; }
-.field label, .progress-label, .nights-pill, .map-subtitle, .section-label, .stall-meta, .price-label, .detail-row .dv, .widget-stall, .widget-frame-header { font-family:'DM Sans',sans-serif; letter-spacing:0.02em; }
-.section-label { color:rgba(240,204,102,0.76); border-bottom-color:rgba(74,66,53,0.65); }
-.info-header, .price-block, .details-block { border-bottom-color:rgba(74,66,53,0.72); }
-.stall-id { font-size:23px; font-weight:750; }
-.stall-meta { font-size:12px; color:rgba(191,180,154,0.82); }
-.price-label { font-size:10px; font-weight:700; }
-.price-amount { font-size:29px; font-weight:760; }
-.widget-frame-header { font-size:12px; font-weight:700; color:#5b4d37; }
-.widget-hint { font-size:13px; line-height:1.45; font-weight:500; }
-.legend { justify-content:center; gap:18px; padding:10px 16px; border-top-color:rgba(74,66,53,0.7); }
-.li { font-size:11px; color:rgba(191,180,154,0.86); }
-.lw { width:14px; height:9px; }
-.mobile-preserved-dock-title { letter-spacing:0; }
-.checkout-transition-card p { max-width:280px; }
-@media(max-width:600px){
-  .hdr { padding:12px 14px; gap:8px; }
-  .brand-text h1 { font-size:17px; }
-  .badge { display:none; }
-  .hub { padding:18px 16px; }
-  .hub-title { font-size:22px; }
-  .hub-subtitle { font-size:13px; margin-bottom:16px; }
-  .datebar { padding:10px 14px; gap:10px; }
-  .field input[type="date"] { padding:8px 10px; font-size:12px; }
-  .nights-pill { padding:8px 10px; font-size:12px; }
-  .progress-label { flex-basis:100%; padding-bottom:0; min-width:0; font-size:10px; }
-  .legend { gap:12px; padding-bottom:max(10px, env(safe-area-inset-bottom)); }
-  body.widget-active .widget-section.vis:not(.widget-collapsed) .widget-hint { font-size:13px; line-height:1.4; padding:10px 14px; }
-  body.widget-active .widget-section.vis:not(.widget-collapsed) .widget-frame-header { padding:9px 14px; }
-}
-
 </style>
 </head>
 <body>
@@ -490,7 +446,7 @@ body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--tx); 
       <span class="propmap-label">Property Map</span>
     </button>
   </div>
-  <div class="hub-subtitle">Pick a section to view available stalls and RV sites.</div>
+  <div class="hub-subtitle">Select dates above, then pick an area to view the interactive map and reserve.</div>
   <div class="hub-grid" id="hubGrid"></div>
 </div>
 
@@ -512,12 +468,12 @@ body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--tx); 
     <div class="info-panel" id="infoPanel" role="complementary" aria-label="Stall details">
       <div class="info-empty" id="infoEmpty">
         <div class="icon" aria-hidden="true">🐴</div>
-        <p>Select an available spot to view details and book.</p>
+        <p>Tap any available stall or RV to see pricing and reserve it.</p>
       </div>
       <div class="info-content" id="infoContent">
         <div class="info-header">
           <div style="display:flex;justify-content:space-between;align-items:start;">
-            <div><div class="stall-id" id="iStallId">—</div><div class="stall-meta" id="iStallMeta">Select a spot</div></div>
+            <div><div class="stall-id" id="iStallId">—</div><div class="stall-meta" id="iStallMeta">Circle T Arena</div></div>
             <button class="btn-widget-back" onclick="clearSelection()" aria-label="Close panel" style="flex-shrink:0;">✕</button>
           </div>
         </div>
@@ -555,8 +511,8 @@ body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--tx); 
     <button class="btn-widget-back" onclick="hideWidgetForMap()">‹ Back to map</button>
   </div>
   <div class="widget-frame">
-    <div class="widget-frame-header" id="widgetFrameHeader">Checkout</div>
-    <div class="widget-hint" id="widgetHint">Add this spot below. Once saved, choose another spot or continue checkout.</div>
+    <div class="widget-frame-header" id="widgetFrameHeader">Completing reservation...</div>
+    <div class="widget-hint" id="widgetHint">Tap <strong>Book Now</strong> below to add this spot. After it is added, use <strong>+ Add to Booking</strong> to return to the map and choose another spot, or continue through checkout when finished.</div>
     <div class="widget-wrap"><div class="widget-loading" id="widgetMsg">Loading reservation form...</div><div id="CF_WIDGET_TARGET"></div></div>
   </div>
 </div>
@@ -564,16 +520,17 @@ body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--tx); 
 <div class="checkout-transition" id="checkoutTransition" aria-live="polite">
   <div class="checkout-transition-card">
     <h4>Cart saved</h4>
-    <p>Returning you to the map so you can choose another spot.</p>
+    <p>Your booking is still active. Returning you to the map so you can choose another spot.</p>
   </div>
 </div>
 <div class="flow-toast" id="flowToast" aria-live="polite"></div>
 
 <div class="legend">
+  <div class="li"><div class="lw neu"></div> Not checked</div>
+  <div class="li"><div class="lw chk"></div> Checking...</div>
   <div class="li"><div class="lw avail"></div> Available</div>
   <div class="li"><div class="lw unavail"></div> Booked</div>
-  <div class="li"><div class="lw chk"></div> Selected</div>
-  <div class="li"><div class="lw cart"></div> In booking</div>
+  <div class="li"><div class="lw cart"></div> In cart</div>
 </div>
 
 <script>
@@ -941,7 +898,7 @@ function handleCellSelect(cell){
 
 function showInfoPanel(label){
   document.getElementById('infoEmpty').style.display='none';document.getElementById('infoContent').classList.add('vis');
-  document.getElementById('iStallId').textContent=label;document.getElementById('iStallMeta').textContent=(currentArea?currentArea.name:'')+' \u00b7 '+(type==='rv'?'RV Site':(type==='turnout'?'Turn Out':'Stall'));
+  document.getElementById('iStallId').textContent=label;document.getElementById('iStallMeta').textContent=(currentArea?currentArea.name:'')+' \u00b7 Circle T Arena';
   var b=document.getElementById('iAvailBanner');b.className='avail-banner loading';document.getElementById('iAvailText').textContent='Loading pricing...';
   document.getElementById('iAvailDetails').style.display='none';document.getElementById('btnAddCart').disabled=true;
 }
@@ -1019,7 +976,7 @@ function showCheckoutTransitionThenReturn(){
   setTimeout(function(){
     if(el)el.classList.remove('vis');
     hideWidgetForMap();
-    showFlowToast('Cart saved. Choose another spot when ready.',3000);
+    showFlowToast('Your cart is still saved. Choose another spot when ready.',3200);
   },850);
 }
 
@@ -1064,7 +1021,7 @@ function collapseWidgetForMap(){
   document.body.classList.remove('widget-active');
   document.body.classList.add('has-collapsed-checkout');
   var dock=document.getElementById('mobilePreservedDockSub');
-  if(dock) dock.textContent='Tap to reopen checkout.';
+  if(dock) dock.textContent='Cart saved. Tap to reopen checkout.';
 }
 function expandPreservedCheckout(){
   var ws=document.getElementById('widgetSection');
@@ -1109,7 +1066,7 @@ function cfGetLastPrimaryCartItem(){
 function mobileContinueCheckout(){
   var item=cfGetLastPrimaryCartItem();
   if(!item){
-    showFlowToast('Choose another spot to continue your saved booking.',3000);
+    showFlowToast('Your saved cart is not available yet. Choose another spot to continue.',3200);
     return;
   }
   cfSuppressTransientEmptyCart(10000);
@@ -1122,7 +1079,7 @@ function mobileContinueCheckout(){
   document.getElementById('widgetTitle').textContent='Continue Checkout';
   document.getElementById('widgetStallLabel').textContent='Your saved booking is still active';
   document.getElementById('widgetFrameHeader').textContent='Resume your booking';
-  document.getElementById('widgetHint').innerHTML='Your cart is saved. Tap <strong>View</strong> to review it, or <strong>+ Add to Booking</strong> to return to the map.';
+  document.getElementById('widgetHint').innerHTML='Your cart is saved. Tap <strong>View</strong> in the Checkfront booking banner to review your cart and continue checkout, or use <strong>+ Add to Booking</strong> to return to the map again.';
   document.getElementById('widgetMsg').style.display='block';
   document.getElementById('widgetMsg').textContent='Loading your saved booking...';
   document.getElementById('CF_WIDGET_TARGET').innerHTML='';
@@ -1157,7 +1114,7 @@ function sessionCheckout(){
   document.getElementById('widgetTitle').textContent='Your Cart';
   document.getElementById('widgetStallLabel').textContent='Review your items and complete checkout';
   document.getElementById('widgetFrameHeader').textContent='Your booking cart';
-  document.getElementById('widgetHint').innerHTML='Your saved cart is loaded below. Continue checkout or add another spot.';
+  document.getElementById('widgetHint').innerHTML='Your saved cart is loaded below. Continue through checkout, or use <strong>+ Add to Booking</strong> to return to the map and choose another spot.';
   document.getElementById('widgetMsg').style.display='block';
   document.getElementById('CF_WIDGET_TARGET').innerHTML='';
   scrollToCheckoutPanel();
@@ -1246,15 +1203,15 @@ function launchBooking(){
   _widgetWasLarge=false;
   var hint=document.getElementById('widgetHint');
   if(sessionItemCount<=1){
-    hint.innerHTML='Add this spot below. Once saved, choose another spot or continue checkout.';
+    hint.innerHTML='Tap <strong>Book Now</strong> below to add this spot. After it is added, use <strong>+ Add to Booking</strong> to return to the map and choose another spot, or continue through checkout when finished.';
   }else{
-    hint.innerHTML='Your cart is saved. Add this spot below, then choose another or continue checkout.';
+    hint.innerHTML='Your previous selections are saved. Tap <strong>Book Now</strong> below to add this spot to the same reservation, then continue checkout or use <strong>+ Add to Booking</strong> to choose another spot.';
   }
-  document.getElementById('widgetTitle').textContent=sessionItemCount<=1?'Add to Your Reservation':'Add Another Spot';
+  document.getElementById('widgetTitle').textContent=sessionItemCount<=1?'Complete Your Reservation':'Add to Your Reservation';
   if(isTouch){document.body.classList.add('widget-active');document.body.classList.remove('has-collapsed-checkout');document.getElementById('infoPanel').classList.remove('vis');}
   document.getElementById('widgetSection').classList.remove('widget-collapsed');
   document.getElementById('widgetSection').classList.add('vis');document.getElementById('widgetStallLabel').textContent=cl;
-  document.getElementById('widgetFrameHeader').textContent='Selected: '+cl;document.getElementById('widgetMsg').style.display='block';document.getElementById('CF_WIDGET_TARGET').innerHTML='';
+  document.getElementById('widgetFrameHeader').textContent='Adding '+cl+' to your cart';document.getElementById('widgetMsg').style.display='block';document.getElementById('CF_WIDGET_TARGET').innerHTML='';
   scrollToCheckoutPanel();
   setTimeout(function(){try{document.getElementById('widgetMsg').style.display='none';
     cfRestoreSavedCart();
